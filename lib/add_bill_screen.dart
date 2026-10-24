@@ -56,7 +56,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
       'price': _currentItemPrice,
       'totalAmount': total,
       'date': date,
-      'itemId': _selectedItem!['id'], // Stock update ke liye ID bhej rahe hain
+      'itemId': _selectedItem!['id'], 
     });
 
     Navigator.pop(context); 
@@ -130,10 +130,11 @@ class _AddBillScreenState extends State<AddBillScreen> {
                     ),
                     const SizedBox(height: 16),
                     
-                    // Dropdown to select item
+                    // Dropdown to select item (FIXED)
                     DropdownButtonFormField<Map<String, dynamic>>(
                       decoration: const InputDecoration(labelText: "Select Item", border: OutlineInputBorder()),
-                      value: _selectedItem,
+                      // Yahan fix kiya gaya hai:
+                      value: _selectedItem == null ? null : _stockItems.firstWhere((element) => element['id'] == _selectedItem!['id'], orElse: () => _stockItems.first),
                       items: _stockItems.map((item) {
                         return DropdownMenuItem<Map<String, dynamic>>(
                           value: item,
