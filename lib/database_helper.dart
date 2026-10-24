@@ -27,14 +27,19 @@ class DatabaseHelper {
     );
   }
 
-  // Yahan 'instance.database' ki jagah 'database' kar diya hai
   Future<int> insertBill(Map<String, dynamic> row) async {
-    Database db = await database; // <-- Fix yahan hai
+    Database db = await database;
     return await db.insert('bills', row);
   }
 
   Future<List<Map<String, dynamic>>> getAllBills() async {
-    Database db = await database; // <-- Fix yahan hai
+    Database db = await database;
     return await db.query('bills', orderBy: 'id DESC');
+  }
+
+  // --- YE NAYA FUNCTION ADD HUA HAI ---
+  Future<int> deleteBill(int id) async {
+    Database db = await database;
+    return await db.delete('bills', where: 'id = ?', whereArgs: [id]);
   }
 }
