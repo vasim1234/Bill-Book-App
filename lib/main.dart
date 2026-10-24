@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'add_bill_screen.dart';
-// Hum ek nayi file banayenge stock ke liye, abhi ke liye hum ek khali screen dikhayenge
 import 'stock_screen.dart'; 
 
 void main() {
@@ -20,12 +19,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.indigo,
         scaffoldBackgroundColor: Colors.grey[100],
       ),
-      home: const MainNavigationScreen(), // Naya Main Screen
+      home: const MainNavigationScreen(), 
     );
   }
 }
 
-// Ye naya screen hai jo bottom navigation manage karega
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
@@ -36,10 +34,9 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  // Yahan hum apni screens ki list banayenge
   final List<Widget> _screens = [
-    const KhataScreen(), // Pehla tab (Bills/Khata)
-    const StockScreen(), // Dusra tab (Stock) - Ye hum aage banayenge
+    const KhataScreen(),
+    const StockScreen(),
   ];
 
   @override
@@ -70,7 +67,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
-// Tumhara purana HomePage ab KhataScreen ban gaya hai
 class KhataScreen extends StatefulWidget {
   const KhataScreen({super.key});
 
@@ -101,7 +97,7 @@ class _KhataScreenState extends State<KhataScreen> {
   }
 
   void _deleteBill(int id) async {
-    await DatabaseHelper().deleteBill(id);
+    await DatabaseHelper().deleteBill(id); // Ab ye kaam karega
     _loadBills();
   }
 
@@ -163,7 +159,8 @@ class _KhataScreenState extends State<KhataScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
+          // Yahan se 'const' hata diya hai
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => AddBillScreen()));
           _loadBills();
         },
         backgroundColor: Colors.indigo,
