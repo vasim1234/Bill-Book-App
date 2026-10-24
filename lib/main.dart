@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'add_bill_screen.dart';
-import 'stock_screen.dart'; 
+import 'stock_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,9 +34,13 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
+  // Saari screens ki list
   final List<Widget> _screens = [
-    const KhataScreen(),
-    const StockScreen(),
+    const KhataScreen(),       // 0
+    const StockScreen(),       // 1
+    const Center(child: Text("Cash Screen (Coming Soon)")), // 2
+    const Center(child: Text("Quick Add (Coming Soon)")),   // 3
+    const Center(child: Text("Staff Screen (Coming Soon)")),// 4
   ];
 
   @override
@@ -44,6 +48,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // Saare items dikhane ke liye
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -53,20 +58,34 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         selectedItemColor: Colors.indigo,
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'Khata',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory),
-            label: 'Stock',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.money), label: 'Cash'),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory), label: 'Stock'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.flash_on), label: 'Quick'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
         ],
       ),
+      
+      // Center wala bada "+" button (Sale ke liye)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => AddBillScreen()));
+          // Bill save hone ke baad list refresh karne ke liye
+          setState(() {
+            _currentIndex = 0; // Wapas Khata par le aao
+          });
+        },
+        backgroundColor: Colors.indigo,
+        child: const Icon(Icons.shopping_cart, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
 
+// ==========================================
+// KHATA SCREEN (Jo humne pehle banaya tha)
+// ==========================================
 class KhataScreen extends StatefulWidget {
   const KhataScreen({super.key});
 
@@ -97,7 +116,7 @@ class _KhataScreenState extends State<KhataScreen> {
   }
 
   void _deleteBill(int id) async {
-    await DatabaseHelper().deleteBill(id); // Ab ye kaam karega
+    await DatabaseHelper().deleteBill(id);
     _loadBills();
   }
 
@@ -156,15 +175,6 @@ class _KhataScreenState extends State<KhataScreen> {
                   ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // Yahan se 'const' hata diya hai
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => AddBillScreen()));
-          _loadBills();
-        },
-        backgroundColor: Colors.indigo,
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
