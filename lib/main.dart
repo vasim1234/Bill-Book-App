@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'database_helper.dart';
+import 'add_bill_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,17 +14,34 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bill Book',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.grey[100],
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: const HomePage(),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Map<String, dynamic>> _bills = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBills();
+  }
+
+  void _loadBills() async {
+    final data = await DatabaseHelper().getAllBills();
+    setState(() {
+      _bills = data;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,15 +51,27 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.blue[800],
         foregroundColor: Colors.white,
       ),
-      body: const Center(
-        child: Text(
-          'Bill Book App\nComing Soon...',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
+      body: _bills.isEmpty
+          ? const Center(child: Text('Koi bill nahi hai. Naya bill banao!'))
+          : ListView.builder(
+              itemCount: _bills.length,
+              itemBuilder: (context, index) {
+                final bill = _bills[index];
+                return Card(
+                  margin: EdgeInsets.all(8),
+                  child: ListTile(
+                    title: Text("${bill['customerName']} - ₹${bill['totalAmount']}"),
+                    subtitle: Text("${bill['itemName']} x ${bill['quantity']}"),
+                    trailing: Text(bill['date']),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () async {
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => AddBillScreen()));
+          _loadBills(); // Wapas aane par list refresh karo
+        },
         backgroundColor: Colors.blue[800],
         child: const Icon(Icons.add, color: Colors.white),
       ),
