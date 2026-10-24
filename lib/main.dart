@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'add_bill_screen.dart';
 import 'stock_screen.dart';
+import 'settings_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,10 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'My Dukan',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: Colors.grey[100],
-      ),
+      theme: ThemeData(primarySwatch: Colors.indigo, scaffoldBackgroundColor: Colors.grey[100]),
       home: const MainNavigationScreen(), 
     );
   }
@@ -33,22 +31,62 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  String _businessName = "My Dukan"; // Default naam
 
-  // Saari screens ki list
   final List<Widget> _screens = [
-    const KhataScreen(),       // 0
-    const StockScreen(),       // 1
-    const Center(child: Text("Cash Screen (Coming Soon)")), // 2
-    const Center(child: Text("Quick Add (Coming Soon)")),   // 3
-    const Center(child: Text("Staff Screen (Coming Soon)")),// 4
+    const KhataScreen(),
+    const StockScreen(),
+    const Center(child: Text("Cash Screen (Coming Soon)")),
+    const Center(child: Text("Quick Add (Coming Soon)")),
+    const Center(child: Text("Staff Screen (Coming Soon)")),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBusinessName();
+  }
+
+  void _loadBusinessName() async {
+    final data = await DatabaseHelper().getSettings();
+    if (data != null && data['businessName'] != null && data['businessName'].toString().isNotEmpty) {
+      setState(() {
+        _businessName = data['businessName'];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            const Icon(Icons.store, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(_businessName, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        backgroundColor: Colors.indigo[900], // Dark blue
+        foregroundColor: Colors.white,
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () async {
+                // Settings sidebar kholo
+                final result = await Scaffold.of(context).openDrawer();
+              },
+            ),
+          )
+        ],
+      ),
+      // Ye Drawer ko sidebar ke liye call karta hai
+      drawer: SettingsScreen(),
+      
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Saare items dikhane ke liye
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -66,14 +104,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       
-      // Center wala bada "+" button (Sale ke liye)
+      // Bada "+" button (Sale ke liye)
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => AddBillScreen()));
-          // Bill save hone ke baad list refresh karne ke liye
-          setState(() {
-            _currentIndex = 0; // Wapas Khata par le aao
-          });
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
+          setState(() { _currentIndex = 0; });
         },
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.shopping_cart, color: Colors.white),
@@ -122,60 +157,50 @@ class _KhataScreenState extends State<KhataScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mera Khata'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-      ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: Colors.indigo[50],
-            child: Text(
-              'Total Udhaar: ₹${_totalAmount.toStringAsFixed(2)}',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo[900]),
-              textAlign: TextAlign.center,
-            ),
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.indigo[50],
+          child: Text(
+            'Total Udhaar: ₹${_totalAmount.toStringAsFixed(2)}',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo[900]),
+            textAlign: TextAlign.center,
           ),
-          Expanded(
-            child: _bills.isEmpty
-                ? const Center(child: Text('Koi bill nahi hai. Naya bill banao!'))
-                : ListView.builder(
-                    itemCount: _bills.length,
-                    itemBuilder: (context, index) {
-                      final bill = _bills[index];
-                      return Dismissible(
-                        key: Key(bill['id'].toString()),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
+        ),
+        Expanded(
+          child: _bills.isEmpty
+              ? const Center(child: Text('Koi bill nahi hai. Naya bill banao!'))
+              : ListView.builder(
+                  itemCount: _bills.length,
+                  itemBuilder: (context, index) {
+                    final bill = _bills[index];
+                    return Dismissible(
+                      key: Key(bill['id'].toString()),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      onDismissed: (direction) {
+                        _deleteBill(bill['id']);
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.all(8),
+                        child: ListTile(
+                          title: Text("${bill['customerName']} - ₹${bill['totalAmount']}"),
+                          subtitle: Text("${bill['itemName']} x ${bill['quantity']}"),
+                          trailing: Text(bill['date']),
                         ),
-                        onDismissed: (direction) {
-                          _deleteBill(bill['id']);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Bill delete ho gaya!')),
-                          );
-                        },
-                        child: Card(
-                          margin: const EdgeInsets.all(8),
-                          child: ListTile(
-                            title: Text("${bill['customerName']} - ₹${bill['totalAmount']}"),
-                            subtitle: Text("${bill['itemName']} x ${bill['quantity']}"),
-                            trailing: Text(bill['date']),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
