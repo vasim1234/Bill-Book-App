@@ -18,13 +18,11 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'bill_book.db');
     return await openDatabase(
       path,
-      version: 2, // Version badha diya (kyunki nayi table add ho rahi hai)
+      version: 2,
       onCreate: (db, version) async {
-        // Purani Bills table
         await db.execute(
           'CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, itemName TEXT, quantity INTEGER, price REAL, totalAmount REAL, date TEXT)',
         );
-        // Nayi Items (Stock) table
         await db.execute(
           'CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)',
         );
@@ -39,9 +37,26 @@ class DatabaseHelper {
     );
   }
 
-  // --- KHATA (Bills) Functions ---
+  // --- KHATA ---
   Future<int> insertBill(Map<String, dynamic> row) async {
     Database db = await database;
+    
+    // Naya Logic: Bill save karte waqt Stock kam karo
+    int itemId = row['itemId']; // Humein item ki ID chahiye hogi
+    int qty = row['quantity'];
+    
+    // Item ka current stock nikalo
+    List<Map<String, dynamic>> itemData = await db.query('items', where: 'id = ?', whereArgs: [itemId]);
+    if (itemData.isNotEmpty) {
+      int currentStock = itemData.first['stock'];
+      int newStock = currentStock - qty;
+      if (newStock < 0) newStock = 0; // Stock 0 se neeche na jaye
+      
+      // Stock update karo
+      await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [itemId]);
+    }
+
+    // Bill save karo
     return await db.insert('bills', row);
   }
 
@@ -55,7 +70,7 @@ class DatabaseHelper {
     return await db.delete('bills', where: 'id = ?', whereArgs: [id]);
   }
 
-  // --- STOCK (Items) Functions ---
+  // --- STOCK ---
   Future<int> insertItem(Map<String, dynamic> row) async {
     Database db = await database;
     return await db.insert('items', row);
