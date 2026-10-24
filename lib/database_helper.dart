@@ -27,15 +27,14 @@ class DatabaseHelper {
     );
   }
 
-  // Data Save karne ke liye
+  // Yahan 'instance.database' ki jagah 'database' kar diya hai
   Future<int> insertBill(Map<String, dynamic> row) async {
-    Database db = await instance.database;
+    Database db = await database; // <-- Fix yahan hai
     return await db.insert('bills', row);
   }
 
-  // Data padhne ke liye
   Future<List<Map<String, dynamic>>> getAllBills() async {
-    Database db = await instance.database;
+    Database db = await database; // <-- Fix yahan hai
     return await db.query('bills', orderBy: 'id DESC');
   }
 }
