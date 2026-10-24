@@ -2,53 +2,208 @@ import 'package:flutter/material.dart';
 import 'database_helper.dart';
 
 class AddBillScreen extends StatefulWidget {
+  const AddBillScreen({super.key});
+
   @override
-  _AddBillScreenState createState() => _AddBillScreenState();
+  State<AddBillScreen> createState() => _AddBillScreenState();
 }
 
 class _AddBillScreenState extends State<AddBillScreen> {
   final _customerController = TextEditingController();
-  final _itemController = TextEditingController();
-  final _qtyController = TextEditingController();
-  final _priceController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _addressController = TextEditingController();
   
+  List<Map<String, dynamic>> _stockItems = [];
+  Map<String, dynamic>? _selectedItem;
+  int _quantity = 1;
+  double _currentItemPrice = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStockItems();
+  }
+
+  void _loadStockItems() async {
+    final items = await DatabaseHelper().getAllItems();
+    setState(() {
+      _stockItems = items;
+    });
+  }
+
   void _saveBill() async {
-    String customer = _customerController.text;
-    String item = _itemController.text;
-    int qty = int.tryParse(_qtyController.text) ?? 0;
-    double price = double.tryParse(_priceController.text) ?? 0.0;
-    double total = qty * price;
+    if (_customerController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka naam likho!')));
+      return;
+    }
+    if (_selectedItem == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item select karo!')));
+      return;
+    }
+    
+    if (_selectedItem!['stock'] < _quantity) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Itna stock nahi hai!')));
+      return;
+    }
+
+    double total = _currentItemPrice * _quantity;
     String date = DateTime.now().toString().substring(0, 10);
 
-    if (customer.isNotEmpty && item.isNotEmpty && qty > 0 && price > 0) {
-      await DatabaseHelper().insertBill({
-        'customerName': customer,
-        'itemName': item,
-        'quantity': qty,
-        'price': price,
-        'totalAmount': total,
-        'date': date,
-      });
-      Navigator.pop(context); // Wapas home screen par jao
-    }
+    await DatabaseHelper().insertBill({
+      'customerName': _customerController.text,
+      'itemName': _selectedItem!['itemName'],
+      'quantity': _quantity,
+      'price': _currentItemPrice,
+      'totalAmount': total,
+      'date': date,
+      'itemId': _selectedItem!['id'], // Stock update ke liye ID bhej rahe hain
+    });
+
+    Navigator.pop(context); 
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Naya Bill Banao")),
-      body: Padding(
+      appBar: AppBar(
+        title: const Text("New Sale (Bill)"),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(controller: _customerController, decoration: InputDecoration(labelText: "Customer ka Naam")),
-            TextField(controller: _itemController, decoration: InputDecoration(labelText: "Item ka Naam")),
-            TextField(controller: _qtyController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: "Quantity")),
-            TextField(controller: _priceController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: "Price per item")),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveBill,
-              child: Text("Bill Save Karo"),
+            // Customer Details Section
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.person, color: Colors.indigo),
+                        SizedBox(width: 8),
+                        Text("Customer Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _customerController,
+                      decoration: const InputDecoration(labelText: "Customer Name", border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _mobileController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(labelText: "Mobile Number (Optional)", border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _addressController,
+                      decoration: const InputDecoration(labelText: "Address (Optional)", border: OutlineInputBorder()),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+
+            // Items Section
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.shopping_bag, color: Colors.indigo),
+                        SizedBox(width: 8),
+                        Text("Items Jodein", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Dropdown to select item
+                    DropdownButtonFormField<Map<String, dynamic>>(
+                      decoration: const InputDecoration(labelText: "Select Item", border: OutlineInputBorder()),
+                      value: _selectedItem,
+                      items: _stockItems.map((item) {
+                        return DropdownMenuItem<Map<String, dynamic>>(
+                          value: item,
+                          child: Text("${item['itemName']} (Stock: ${item['stock']})"),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedItem = value;
+                          _currentItemPrice = value!['price'];
+                        });
+                      },
+                    ),
+                    
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        // Price
+                        Expanded(
+                          child: TextField(
+                            readOnly: true,
+                            controller: TextEditingController(text: _currentItemPrice.toString()),
+                            decoration: const InputDecoration(labelText: "Price (₹)", border: OutlineInputBorder()),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Quantity
+                        Expanded(
+                          child: TextField(
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: "Quantity", border: OutlineInputBorder()),
+                            controller: TextEditingController(text: _quantity.toString()),
+                            onChanged: (value) {
+                              setState(() {
+                                _quantity = int.tryParse(value) ?? 1;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+                    
+                    // Total Amount Show
+                    Text(
+                      "Total Amount: ₹${(_currentItemPrice * _quantity).toStringAsFixed(2)}",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
+                    )
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Save Button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _saveBill,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text("Save Bill", style: TextStyle(fontSize: 18)),
+              ),
             )
           ],
         ),
