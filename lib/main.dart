@@ -3,6 +3,7 @@ import 'database_helper.dart';
 import 'add_bill_screen.dart';
 import 'stock_screen.dart';
 import 'settings_screen.dart';
+import 'cash_screen.dart'; // Ye import add karna zaroori hai
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +17,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'My Dukan',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.indigo, scaffoldBackgroundColor: Colors.grey[100]),
+      theme: ThemeData(
+        primarySwatch: Colors.indigo, 
+        scaffoldBackgroundColor: Colors.grey[100]
+      ),
       home: const MainNavigationScreen(), 
     );
   }
@@ -33,12 +37,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   String _businessName = "My Dukan"; 
 
+  // Yahan humne 'CashScreen' add kar diya hai
   final List<Widget> _screens = [
-    const KhataScreen(),
-    const StockScreen(),
-    const Center(child: Text("Cash Screen (Coming Soon)")),
-    const Center(child: Text("Quick Add (Coming Soon)")),
-    const Center(child: Text("Staff Screen (Coming Soon)")),
+    const CashScreen(),       // Tab 0: Cash (Naya)
+    const StockScreen(),      // Tab 1: Stock
+    const Center(child: Text("Quick Add (Coming Soon)")),  // Tab 2: Quick (Add button ke liye jagah)
+    const Center(child: Text("Staff Screen (Coming Soon)")), // Tab 3: Staff
   ];
 
   @override
@@ -80,7 +84,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           )
         ],
       ),
-      drawer: SettingsScreen(),
+      drawer: const SettingsScreen(),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -100,93 +104,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
         ],
       ),
+      // Center wala "Add" button (Sale ke liye)
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
-          setState(() { _currentIndex = 0; });
+          setState(() { _currentIndex = 0; }); // Bill banne ke baad wapas Cash par le aao
         },
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.shopping_cart, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-}
-
-class KhataScreen extends StatefulWidget {
-  const KhataScreen({super.key});
-  @override
-  State<KhataScreen> createState() => _KhataScreenState();
-}
-
-class _KhataScreenState extends State<KhataScreen> {
-  List<Map<String, dynamic>> _bills = [];
-  double _totalAmount = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadBills();
-  }
-
-  void _loadBills() async {
-    final data = await DatabaseHelper().getAllBills();
-    double total = 0;
-    for (var bill in data) {
-      total += (bill['totalAmount'] as num).toDouble();
-    }
-    setState(() { _bills = data; _totalAmount = total; });
-  }
-
-  void _deleteBill(int id) async {
-    await DatabaseHelper().deleteBill(id);
-    _loadBills();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          color: Colors.indigo[50],
-          child: Text(
-            'Total Udhaar: ₹${_totalAmount.toStringAsFixed(2)}',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo[900]),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        Expanded(
-          child: _bills.isEmpty
-              ? const Center(child: Text('Koi bill nahi hai. Naya bill banao!'))
-              : ListView.builder(
-                  itemCount: _bills.length,
-                  itemBuilder: (context, index) {
-                    final bill = _bills[index];
-                    return Dismissible(
-                      key: Key(bill['id'].toString()),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (direction) { _deleteBill(bill['id']); },
-                      child: Card(
-                        margin: const EdgeInsets.all(8),
-                        child: ListTile(
-                          title: Text("${bill['customerName']} - ₹${bill['totalAmount']}"),
-                          subtitle: Text("Status: ${bill['paymentStatus'] ?? 'UNPAID'}"),
-                          trailing: Text(bill['date']),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
     );
   }
 }
