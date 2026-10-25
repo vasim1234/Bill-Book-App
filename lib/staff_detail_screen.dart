@@ -11,23 +11,40 @@ class StaffDetailScreen extends StatefulWidget {
 
 class _StaffDetailScreenState extends State<StaffDetailScreen> {
   List<Map<String, dynamic>> _payments = [];
+  List<Map<String, dynamic>> _attendance = [];
+  
   double _totalPaid = 0.0;
+  double _totalEarned = 0.0;
+  int _presentDays = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadPayments();
+    _loadData();
   }
 
-  void _loadPayments() async {
-    final data = await DatabaseHelper().getStaffPayments(widget.staff['id']);
-    double total = 0;
-    for (var p in data) {
-      total += (p['amount'] as num).toDouble();
+  void _loadData() async {
+    // 1. Payments nikaalo
+    final payments = await DatabaseHelper().getStaffPayments(widget.staff['id']);
+    double totalPaid = 0;
+    for (var p in payments) {
+      totalPaid += (p['amount'] as num).toDouble();
     }
+
+    // 2. Attendance (Haazri) nikaalo
+    // Filhal hum saari attendance nikaal rahe hain, aage filter laga sakte hain
+    final attendance = await DatabaseHelper().getTodayAttendance(""); 
+    // NOTE: getTodayAttendance mein date filter hai, isliye better hai direct query karein
+    // Par abhi ke liye hum database_helper se direct nikal lete hain
+
+    final summary = await DatabaseHelper().getStaffAttendanceSummary(widget.staff['id']);
+
     setState(() {
-      _payments = data;
-      _totalPaid = total;
+      _payments = payments;
+      _totalPaid = totalPaid;
+      _totalEarned = summary['totalEarned'];
+      _presentDays = summary['presentDays'];
+      // _attendance = attendance; // Agar aage history chahiye toh use karenge
     });
   }
 
@@ -56,11 +73,11 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                 await DatabaseHelper().insertStaffPayment({
                   'staffId': widget.staff['id'],
                   'amount': double.parse(amountController.text),
-                  'note': noteController.text,
+                  'note': noteController.text.isEmpty ? "Pagar / Advance Diya" : noteController.text,
                   'date': DateTime.now().toString().substring(0, 10),
                 });
                 Navigator.pop(context);
-                _loadPayments();
+                _loadData();
               }
             },
             child: const Text("DEIN", style: TextStyle(color: Colors.white)),
@@ -95,6 +112,7 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
   @override
   Widget build(BuildContext context) {
     double dailyWage = (widget.staff['dailyWage'] as num).toDouble();
+    double balance = _totalEarned - _totalPaid;
     
     return Scaffold(
       appBar: AppBar(
@@ -120,11 +138,30 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildSummaryCol("PAGAR BANI", "₹0", Colors.black),
+                // Pagar Bani (Kamai)
+                _buildSummaryCol(
+                  "PAGAR BANI", 
+                  "₹${_totalEarned.toStringAsFixed(0)}", 
+                  Colors.black
+                ),
                 Container(height: 40, width: 1, color: Colors.grey[300]),
-                _buildSummaryCol("PAISE DIYE", "₹${_totalPaid.toStringAsFixed(0)}", Colors.green),
+                
+                // Paise Diye
+                _buildSummaryCol(
+                  "PAISE DIYE", 
+                  "₹${_totalPaid.toStringAsFixed(0)}", 
+                  Colors.green
+                ),
                 Container(height: 40, width: 1, color: Colors.grey[300]),
-                _buildSummaryCol("STATUS", "Clear", Colors.black),
+                
+                // Status (Baki ya Clear)
+                _buildSummaryCol(
+                  "STATUS", 
+                  balance > 0 
+                      ? "Baki: ₹${balance.toStringAsFixed(0)}" 
+                      : (balance < 0 ? "Advance" : "Clear"), 
+                  balance > 0 ? Colors.red : Colors.blue
+                ),
               ],
             ),
           ),
@@ -168,7 +205,7 @@ class _StaffDetailScreenState extends State<StaffDetailScreen> {
                         leading: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.money, color: Colors.white)),
                         title: Text(p['note'].toString().isEmpty ? "Pagar Diya" : p['note']),
                         subtitle: Text(p['date']),
-                        trailing: Text("₹${p['amount']}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                        trailing: Text("- ₹${p['amount']}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16)),
                       );
                     },
                   ),
