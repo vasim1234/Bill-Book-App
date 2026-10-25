@@ -15,52 +15,44 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'bill_book.db');
+    String path = join(await getDatabasesPath(), 'bill_book_v2.db'); // Naya Database Name
     return await openDatabase(
       path,
-      version: 3, // Version badha diya
+      version: 1,
       onCreate: (db, version) async {
-        await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, itemName TEXT, quantity INTEGER, price REAL, totalAmount REAL, date TEXT)');
+        // 1. BILLS Table (Main Bill ki detail)
+        await db.execute('''
+          CREATE TABLE bills(
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            customerName TEXT, 
+            customerMobile TEXT, 
+            totalAmount REAL, 
+            date TEXT,
+            paymentStatus TEXT
+          )
+        ''');
+
+        // 2. BILL ITEMS Table (Bill ke andar kya kya hai)
+        await db.execute('''
+          CREATE TABLE bill_items(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            billId INTEGER,
+            itemName TEXT,
+            quantity INTEGER,
+            price REAL
+          )
+        ''');
+
+        // 3. ITEMS (Stock) Table
         await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
-        // Nayi Settings table
+        
+        // 4. SETTINGS Table
         await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT)');
       },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
-        }
-        if (oldVersion < 3) {
-          await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT)');
-        }
-      }
     );
   }
 
-  // --- KHATA & STOCK FUNCTIONS (Purane wale) ---
-  Future<int> insertBill(Map<String, dynamic> row) async {
-    Database db = await database;
-    int itemId = row['itemId'];
-    int qty = row['quantity'];
-    List<Map<String, dynamic>> itemData = await db.query('items', where: 'id = ?', whereArgs: [itemId]);
-    if (itemData.isNotEmpty) {
-      int currentStock = itemData.first['stock'];
-      int newStock = currentStock - qty;
-      if (newStock < 0) newStock = 0;
-      await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [itemId]);
-    }
-    return await db.insert('bills', row);
-  }
-
-  Future<List<Map<String, dynamic>>> getAllBills() async {
-    Database db = await database;
-    return await db.query('bills', orderBy: 'id DESC');
-  }
-
-  Future<int> deleteBill(int id) async {
-    Database db = await database;
-    return await db.delete('bills', where: 'id = ?', whereArgs: [id]);
-  }
-
+  // --- STOCK ---
   Future<int> insertItem(Map<String, dynamic> row) async {
     Database db = await database;
     return await db.insert('items', row);
@@ -76,22 +68,46 @@ class DatabaseHelper {
     return await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> deleteItem(int id) async {
-    Database db = await database;
-    return await db.delete('items', where: 'id = ?', whereArgs: [id]);
-  }
-
-  // --- SETTINGS FUNCTIONS ---
+  // --- SETTINGS ---
   Future<Map<String, dynamic>?> getSettings() async {
     Database db = await database;
     List<Map<String, dynamic>> result = await db.query('settings', where: 'id = ?', whereArgs: [1]);
     if (result.isNotEmpty) return result.first;
-    return null; // Agar pehli baar app khuli hai toh null aayega
+    return null;
   }
 
   Future<int> saveSettings(Map<String, dynamic> row) async {
     Database db = await database;
-    row['id'] = 1; // Hum hamesha ek hi row update karenge
+    row['id'] = 1;
     return await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // --- NAYA: MULTI-ITEM BILL SAVE KARNA ---
+  Future<void> saveFullBill(Map<String, dynamic> billData, List<Map<String, dynamic>> billItems) async {
+    Database db = await database;
+    
+    // 1. Bill ko save karo
+    int billId = await db.insert('bills', billData);
+
+    // 2. Bill ke saare items save karo aur Stock kam karo
+    for (var item in billItems) {
+      item['billId'] = billId; // Bill ID daalo
+      await db.insert('bill_items', item);
+
+      // Stock update karo
+      List<Map<String, dynamic>> stockData = await db.query('items', where: 'itemName = ?', whereArgs: [item['itemName']]);
+      if (stockData.isNotEmpty) {
+        int currentStock = stockData.first['stock'];
+        int newStock = currentStock - (item['quantity'] as int);
+        if (newStock < 0) newStock = 0;
+        await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [stockData.first['id']]);
+      }
+    }
+  }
+
+  // --- KHATA (Bill History) ---
+  Future<List<Map<String, dynamic>>> getAllBills() async {
+    Database db = await database;
+    return await db.query('bills', orderBy: 'id DESC');
   }
 }
