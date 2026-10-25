@@ -15,12 +15,11 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'bill_book_v2.db'); // Naya Database Name
+    String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
     return await openDatabase(
       path,
       version: 1,
       onCreate: (db, version) async {
-        // 1. BILLS Table (Main Bill ki detail)
         await db.execute('''
           CREATE TABLE bills(
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -31,8 +30,6 @@ class DatabaseHelper {
             paymentStatus TEXT
           )
         ''');
-
-        // 2. BILL ITEMS Table (Bill ke andar kya kya hai)
         await db.execute('''
           CREATE TABLE bill_items(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,17 +39,13 @@ class DatabaseHelper {
             price REAL
           )
         ''');
-
-        // 3. ITEMS (Stock) Table
         await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
-        
-        // 4. SETTINGS Table
         await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT)');
       },
     );
   }
 
-  // --- STOCK ---
+  // --- STOCK FUNCTIONS ---
   Future<int> insertItem(Map<String, dynamic> row) async {
     Database db = await database;
     return await db.insert('items', row);
@@ -68,7 +61,13 @@ class DatabaseHelper {
     return await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [id]);
   }
 
-  // --- SETTINGS ---
+  // Purana deleteItem function wapas add kiya
+  Future<int> deleteItem(int id) async {
+    Database db = await database;
+    return await db.delete('items', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- SETTINGS FUNCTIONS ---
   Future<Map<String, dynamic>?> getSettings() async {
     Database db = await database;
     List<Map<String, dynamic>> result = await db.query('settings', where: 'id = ?', whereArgs: [1]);
@@ -82,7 +81,7 @@ class DatabaseHelper {
     return await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  // --- NAYA: MULTI-ITEM BILL SAVE KARNA ---
+  // --- MULTI-ITEM BILL FUNCTIONS ---
   Future<void> saveFullBill(Map<String, dynamic> billData, List<Map<String, dynamic>> billItems) async {
     Database db = await database;
     
@@ -91,7 +90,7 @@ class DatabaseHelper {
 
     // 2. Bill ke saare items save karo aur Stock kam karo
     for (var item in billItems) {
-      item['billId'] = billId; // Bill ID daalo
+      item['billId'] = billId;
       await db.insert('bill_items', item);
 
       // Stock update karo
@@ -109,5 +108,12 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getAllBills() async {
     Database db = await database;
     return await db.query('bills', orderBy: 'id DESC');
+  }
+
+  // Purana deleteBill function wapas add kiya
+  Future<int> deleteBill(int id) async {
+    Database db = await database;
+    await db.delete('bill_items', where: 'billId = ?', whereArgs: [id]);
+    return await db.delete('bills', where: 'id = ?', whereArgs: [id]);
   }
 }
