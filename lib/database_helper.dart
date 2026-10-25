@@ -15,35 +15,41 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-  String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
-  return await openDatabase(
-    path,
-    version: 4, // Version 4 kar diya (GST ke liye)
-    onCreate: (db, version) async {
-      await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
-      await db.execute('CREATE TABLE bill_items(id INTEGER PRIMARY KEY AUTOINCREMENT, billId INTEGER, itemName TEXT, quantity INTEGER, price REAL)');
-      await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
-      // Settings table mein 'gst' aur 'businessType' column add kiya
-      await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT, theme TEXT, gst TEXT, businessType TEXT)');
-      
-      await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
-      await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
-    },
-    onUpgrade: (db, oldVersion, newVersion) async {
-      if (oldVersion < 2) {
+    String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
+    return await openDatabase(
+      path,
+      version: 5, // Version 5 kar diya (Staff ke liye)
+      onCreate: (db, version) async {
+        // Purane Tables
+        await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
+        await db.execute('CREATE TABLE bill_items(id INTEGER PRIMARY KEY AUTOINCREMENT, billId INTEGER, itemName TEXT, quantity INTEGER, price REAL)');
+        await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
+        await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT, theme TEXT, gst TEXT, businessType TEXT)');
         await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
         await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
+        
+        // Naye Tables (Staff ke liye)
+        await db.execute('CREATE TABLE staff(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, dailyWage REAL)');
+        await db.execute('CREATE TABLE attendance(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, date TEXT, status TEXT, paymentStatus TEXT)');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
+          await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
+        }
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE settings ADD COLUMN theme TEXT');
+        }
+        if (oldVersion < 4) {
+          await db.execute('ALTER TABLE settings ADD COLUMN gst TEXT');
+          await db.execute('ALTER TABLE settings ADD COLUMN businessType TEXT');
+        }
+        if (oldVersion < 5) {
+          await db.execute('CREATE TABLE staff(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, dailyWage REAL)');
+          await db.execute('CREATE TABLE attendance(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, date TEXT, status TEXT, paymentStatus TEXT)');
+        }
       }
-      if (oldVersion < 3) {
-        await db.execute('ALTER TABLE settings ADD COLUMN theme TEXT');
-      }
-      if (oldVersion < 4) {
-        // Purani settings table mein naye columns add kar rahe hain
-        await db.execute('ALTER TABLE settings ADD COLUMN gst TEXT');
-        await db.execute('ALTER TABLE settings ADD COLUMN businessType TEXT');
-      }
-    }
-  );
+    );
   }
 
   // ================= CASH / KHATA FUNCTIONS =================
@@ -99,6 +105,12 @@ class DatabaseHelper {
     return balance;
   }
 
+  // Customer ki detail update karne ke liye
+  Future<int> updateCustomer(int id, String name, String mobile) async {
+    Database db = await database;
+    return await db.update('customers', {'name': name, 'mobile': mobile}, where: 'id = ?', whereArgs: [id]);
+  }
+
   // ================= STOCK & BILL FUNCTIONS =================
 
   Future<int> insertItem(Map<String, dynamic> row) async { Database db = await database; return await db.insert('items', row); }
@@ -109,8 +121,6 @@ class DatabaseHelper {
   
   Future<int> deleteItem(int id) async { Database db = await database; return await db.delete('items', where: 'id = ?', whereArgs: [id]); }
 
-  // --- YAHAN WO DO MISSING FUNCTIONS ADD KIYE HAIN ---
-  
   // 1. Item ko Edit karne ke liye
   Future<int> updateItem(int id, String name, double price, int stock) async {
     Database db = await database;
@@ -135,8 +145,6 @@ class DatabaseHelper {
     }
     return 0.0;
   }
-
-  // ---------------------------------------------------
 
   Future<Map<String, dynamic>?> getSettings() async { Database db = await database; List<Map<String, dynamic>> result = await db.query('settings', where: 'id = ?', whereArgs: [1]); if (result.isNotEmpty) return result.first; return null; }
   
@@ -164,10 +172,26 @@ class DatabaseHelper {
   Future<int> deleteBill(int id) async { Database db = await database; await db.delete('bill_items', where: 'billId = ?', whereArgs: [id]); return await db.delete('bills', where: 'id = ?', whereArgs: [id]); }
   
   Future<List<Map<String, dynamic>>> getBillItems(int billId) async { Database db = await database; return await db.query('bill_items', where: 'billId = ?', whereArgs: [billId]); }
-// Customer ki detail update karne ke liye
-Future<int> updateCustomer(int id, String name, String mobile) async {
-  Database db = await database;
-  return await db.update('customers', {'name': name, 'mobile': mobile}, where: 'id = ?', whereArgs: [id]);
-}
-}
 
+  // ================= STAFF FUNCTIONS =================
+
+  Future<int> insertStaff(Map<String, dynamic> row) async {
+    Database db = await database;
+    return await db.insert('staff', row);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllStaff() async {
+    Database db = await database;
+    return await db.query('staff', orderBy: 'name ASC');
+  }
+
+  Future<int> insertAttendance(Map<String, dynamic> row) async {
+    Database db = await database;
+    return await db.insert('attendance', row);
+  }
+
+  Future<List<Map<String, dynamic>>> getTodayAttendance(String todayDate) async {
+    Database db = await database;
+    return await db.query('attendance', where: 'date = ?', whereArgs: [todayDate]);
+  }
+}
