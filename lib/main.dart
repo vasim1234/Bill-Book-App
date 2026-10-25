@@ -3,7 +3,8 @@ import 'database_helper.dart';
 import 'add_bill_screen.dart';
 import 'stock_screen.dart';
 import 'settings_screen.dart';
-import 'cash_screen.dart'; // Ye import add karna zaroori hai
+import 'cash_screen.dart'; 
+import 'bill_preview_screen.dart'; // Import zaroori hai check ke liye
 
 void main() {
   runApp(const MyApp());
@@ -37,12 +38,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   String _businessName = "My Dukan"; 
 
-  // Yahan humne 'CashScreen' add kar diya hai
   final List<Widget> _screens = [
-    const CashScreen(),       // Tab 0: Cash (Naya)
-    const StockScreen(),      // Tab 1: Stock
-    const Center(child: Text("Quick Add (Coming Soon)")),  // Tab 2: Quick (Add button ke liye jagah)
-    const Center(child: Text("Staff Screen (Coming Soon)")), // Tab 3: Staff
+    const CashScreen(),       
+    const StockScreen(),      
+    const Center(child: Text("Quick Add (Coming Soon)")),  
+    const Center(child: Text("Staff Screen (Coming Soon)")), 
   ];
 
   @override
@@ -62,8 +62,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check karo ki kya hum BillPreviewScreen par hain?
+    // Agar haan, toh AppBar aur BottomBar hide kar do.
+    bool isBillScreen = ModalRoute.of(context)?.settings.name == '/bill_preview';
+
     return Scaffold(
-      appBar: AppBar(
+      appBar: isBillScreen ? null : AppBar(
         title: Row(
           children: [
             const Icon(Icons.store, color: Colors.white),
@@ -84,9 +88,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           )
         ],
       ),
-      drawer: const SettingsScreen(),
+      drawer: isBillScreen ? null : const SettingsScreen(),
       body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: isBillScreen ? null : BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -104,11 +108,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
         ],
       ),
-      // Center wala "Add" button (Sale ke liye)
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: isBillScreen ? null : FloatingActionButton(
         onPressed: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
-          setState(() { _currentIndex = 0; }); // Bill banne ke baad wapas Cash par le aao
+          setState(() { _currentIndex = 0; }); 
         },
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.shopping_cart, color: Colors.white),
