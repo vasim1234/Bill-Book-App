@@ -5,7 +5,8 @@ import 'stock_screen.dart';
 import 'settings_screen.dart';
 import 'cash_screen.dart'; 
 import 'bill_preview_screen.dart';
-import 'staff_screen.dart'; // Naya import add kiya
+import 'staff_screen.dart';
+import 'auth_screen.dart'; // Naya import
 
 void main() {
   runApp(const MyApp());
@@ -23,7 +24,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.indigo, 
         scaffoldBackgroundColor: Colors.grey[100]
       ),
-      home: const MainNavigationScreen(), 
+      // Yahan AuthScreen laga diya hai (Login/Signup)
+      home: const AuthScreen(), 
     );
   }
 }
