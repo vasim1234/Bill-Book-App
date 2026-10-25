@@ -124,4 +124,29 @@ class DatabaseHelper {
     Database db = await database;
     return await db.query('bill_items', where: 'billId = ?', whereArgs: [billId]);
   }
+  // 1. Item ko Edit/Update karne ke liye
+Future<int> updateItem(int id, String name, double price, int stock) async {
+  Database db = await database;
+  return await db.update(
+    'items', 
+    {'itemName': name, 'price': price, 'stock': stock}, 
+    where: 'id = ?', 
+    whereArgs: [id]
+  );
+}
+
+// 2. Is mahine ki Total Sale nikalne ke liye
+Future<double> getThisMonthSale() async {
+  Database db = await database;
+  String currentMonth = DateTime.now().toString().substring(0, 7); // YYYY-MM format
+  // Query: Sum of totalAmount where date starts with current month
+  List<Map<String, dynamic>> result = await db.rawQuery(
+    "SELECT SUM(totalAmount) as total FROM bills WHERE date LIKE ?", 
+    ['$currentMonth%']
+  );
+  if (result.isNotEmpty && result.first['total'] != null) {
+    return (result.first['total'] as num).toDouble();
+  }
+  return 0.0;
+}
 }
