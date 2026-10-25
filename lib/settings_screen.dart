@@ -20,7 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedType = "Wholesaler";
 
   final List<String> _themes = ["Modern Boxed", "Classic Minimal", "Dark Header"];
-  final List<String> _types = ["Wholesaler", "Retailer", "Distributor", "Manufacturer"];
+  final List<String> _types = ["Wholesaler", "Retailer", "Distributor"];
 
   @override
   void initState() {
@@ -55,8 +55,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'theme': _selectedTheme,
       'businessType': _selectedType,
     });
-    Navigator.pop(context, true);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings Saved!')));
+    
+    if (mounted) {
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings Saved Successfully!')));
+    }
   }
 
   @override
@@ -66,17 +69,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: EdgeInsets.zero,
         children: [
           // Header
-          DrawerHeader(
-            decoration: BoxDecoration(color: Colors.indigo[900]),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Icon(Icons.settings, color: Colors.white, size: 40),
-                SizedBox(height: 10),
-                Text('Settings', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              ],
-            ),
+          AppBar(
+            title: const Text("Settings", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.indigo[900],
+            automaticallyImplyLeading: false,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              )
+            ],
           ),
           
           Padding(
@@ -86,9 +88,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // --- APP SHARE BUTTON (PWA Style) ---
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.green[400],
+                    color: Colors.green[500],
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
@@ -114,7 +116,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: () {},
                         icon: const Icon(Icons.phone_android, size: 18),
                         label: const Text("Mobile"),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.indigo[900], 
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -123,16 +129,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: () {},
                         icon: const Icon(Icons.description, size: 18),
                         label: const Text("A4 Wide"),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300], foregroundColor: Colors.black),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[300], 
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
                 // Invoice Theme Dropdown
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: "Invoice Theme", border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: "Invoice Theme", 
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
                   value: _selectedTheme,
                   items: _themes.map((theme) => DropdownMenuItem(value: theme, child: Text(theme))).toList(),
                   onChanged: (value) => setState(() => _selectedTheme = value!),
@@ -165,6 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         ),
                       ),
                     ],
@@ -176,37 +191,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSectionTitle("Business Details"),
                 const SizedBox(height: 10),
                 
-                TextField(controller: _businessController, decoration: const InputDecoration(labelText: "Business Name *", border: OutlineInputBorder())),
-                const SizedBox(height: 10),
+                TextField(
+                  controller: _businessController, 
+                  decoration: const InputDecoration(
+                    labelText: "Business Name *", 
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  )
+                ),
+                const SizedBox(height: 12),
 
+                // Type aur Owner Name ko neeche-upar kar diya hai taaki jagah bache
                 Row(
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: "Type", border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                          labelText: "Type", 
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
                         value: _selectedType,
+                        isExpanded: true, // Text ko box ke andar fit karne ke liye
                         items: _types.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
                         onChanged: (value) => setState(() => _selectedType = value!),
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(child: TextField(controller: _ownerController, decoration: const InputDecoration(labelText: "Aapka Naam", border: OutlineInputBorder()))),
+                    Expanded(
+                      child: TextField(
+                        controller: _ownerController, 
+                        decoration: const InputDecoration(
+                          labelText: "Owner Name", 
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        )
+                      )
+                    ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
                 Row(
                   children: [
-                    Expanded(child: TextField(controller: _mobileController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: "Mobile No.", border: OutlineInputBorder()))),
+                    Expanded(
+                      child: TextField(
+                        controller: _mobileController, 
+                        keyboardType: TextInputType.phone, 
+                        decoration: const InputDecoration(
+                          labelText: "Mobile No.", 
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        )
+                      )
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: TextField(controller: _gstController, decoration: const InputDecoration(labelText: "GST No.", border: OutlineInputBorder()))),
+                    Expanded(
+                      child: TextField(
+                        controller: _gstController, 
+                        decoration: const InputDecoration(
+                          labelText: "GST No.", 
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        )
+                      )
+                    ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
-                TextField(controller: _addressController, decoration: const InputDecoration(labelText: "Address", border: OutlineInputBorder())),
+                TextField(
+                  controller: _addressController, 
+                  decoration: const InputDecoration(
+                    labelText: "Address", 
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  )
+                ),
                 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // --- SAVE BUTTON ---
                 SizedBox(
@@ -214,7 +277,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _saveData,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo[900], 
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+                    ),
                     child: const Text("Save Settings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ),
@@ -230,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSectionTitle(String title) {
     return Align(
       alignment: Alignment.centerLeft,
-      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo)),
+      child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
     );
   }
 }
