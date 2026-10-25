@@ -138,7 +138,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.shopping_cart, color: Colors.white),
       ),
-      floatingButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
