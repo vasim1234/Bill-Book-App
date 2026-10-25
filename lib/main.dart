@@ -23,13 +23,6 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[100]
       ),
       home: const MainNavigationScreen(), 
-      // Yahan routes add kiya hai
-      routes: {
-        '/bill_preview': (context) {
-          final billId = ModalRoute.of(context)!.settings.arguments as int;
-          return BillPreviewScreen(billId: billId);
-        },
-      },
     );
   }
 }
@@ -44,8 +37,11 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   String _businessName = "My Dukan"; 
+  
+  // Bill Preview ko dikhane ke liye variable
+  int? _previewBillId; 
 
-  // Ab yahan 'BillPreviewScreen' nahi hoga, wo routes se khulega
+  // Asli screens
   final List<Widget> _screens = [
     const CashScreen(),       
     const StockScreen(),      
@@ -70,6 +66,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Agar previewBillId set hai, matlab humein bill dikhana hai
+    // Warna normal screens dikhao
+    Widget bodyWidget = _previewBillId != null 
+        ? BillPreviewScreen(billId: _previewBillId!) // Bill Preview Screen
+        : _screens[_currentIndex];                   // Normal Screen
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -93,13 +95,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       drawer: const SettingsScreen(),
-      body: _screens[_currentIndex],
+      
+      // Yahan hum check kar rahe hain ki Bill Preview dikhana hai ya normal screen
+      body: bodyWidget,
+      
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
+            _previewBillId = null; // Agar user menu dabaye, toh bill preview band ho jaye
           });
         },
         selectedItemColor: Colors.indigo,
@@ -112,10 +118,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      
+      // Agar Bill Preview chal raha hai, toh FAB (Cart button) hide kar do
+      floatingActionButton: _previewBillId != null ? null : FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
-          setState(() { _currentIndex = 0; }); 
+          // Bill Screen par jao, aur wapas aane par billId lo
+          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
+          
+          // Agar bill save hua hai aur result mein ID aayi hai
+          if (result != null && result is int) {
+             setState(() {
+               _previewBillId = result; // Bill Preview on kar do
+             });
+          } else {
+             setState(() { _currentIndex = 0; }); 
+          }
         },
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.shopping_cart, color: Colors.white),
