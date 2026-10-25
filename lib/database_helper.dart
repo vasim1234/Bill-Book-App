@@ -217,4 +217,30 @@ class DatabaseHelper {
     await db.delete('staff_payments', where: 'staffId = ?', whereArgs: [staffId]);
     return await db.delete('staff', where: 'id = ?', whereArgs: [staffId]);
   }
+// Staff ki total haazri aur bani hui salary nikalne ke liye
+Future<Map<String, dynamic>> getStaffAttendanceSummary(int staffId) async {
+  Database db = await database;
+  
+  // Staff ki daily wage nikaalo
+  List<Map<String, dynamic>> staffData = await db.query('staff', where: 'id = ?', whereArgs: [staffId]);
+  double dailyWage = 0.0;
+  if (staffData.isNotEmpty) {
+    dailyWage = (staffData.first['dailyWage'] as num).toDouble();
+  }
+
+  // Sirf 'Present' haazri count karo
+  List<Map<String, dynamic>> presentData = await db.query(
+    'attendance', 
+    where: 'staffId = ? AND status = ?', 
+    whereArgs: [staffId, 'Present']
+  );
+  
+  int presentDays = presentData.length;
+  double totalEarned = presentDays * dailyWage;
+
+  return {
+    'presentDays': presentDays,
+    'totalEarned': totalEarned,
+  };
+}
 }
