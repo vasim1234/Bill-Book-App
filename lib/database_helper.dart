@@ -157,4 +157,10 @@ class DatabaseHelper {
   Future<int> deleteBill(int id) async { Database db = await database; await db.delete('bill_items', where: 'billId = ?', whereArgs: [id]); return await db.delete('bills', where: 'id = ?', whereArgs: [id]); }
   
   Future<List<Map<String, dynamic>>> getBillItems(int billId) async { Database db = await database; return await db.query('bill_items', where: 'billId = ?', whereArgs: [billId]); }
+// Customer ki detail update karne ke liye
+Future<int> updateCustomer(int id, String name, String mobile) async {
+  Database db = await database;
+  return await db.update('customers', {'name': name, 'mobile': mobile}, where: 'id = ?', whereArgs: [id]);
 }
+}
+
