@@ -5,6 +5,7 @@ import 'stock_screen.dart';
 import 'settings_screen.dart';
 import 'cash_screen.dart'; 
 import 'bill_preview_screen.dart';
+import 'staff_screen.dart'; // Naya import add kiya
 
 void main() {
   runApp(const MyApp());
@@ -41,12 +42,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   // Bill Preview ko dikhane ke liye variable
   int? _previewBillId; 
 
-  // Asli screens
+  // Asli screens (Yahan StaffScreen add kar diya)
   final List<Widget> _screens = [
     const CashScreen(),       
     const StockScreen(),      
     const Center(child: Text("Quick Add (Coming Soon)")),  
-    const Center(child: Text("Staff Screen (Coming Soon)")), 
+    const StaffScreen(), // <--- Staff Screen yahan add ho gaya
   ];
 
   @override
@@ -137,7 +138,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.shopping_cart, color: Colors.white),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
