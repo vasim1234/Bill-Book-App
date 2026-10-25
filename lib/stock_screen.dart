@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'add_item_screen.dart';
+import 'edit_item_screen.dart'; // Naya import
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key});
@@ -12,33 +13,42 @@ class StockScreen extends StatefulWidget {
 class _StockScreenState extends State<StockScreen> {
   List<Map<String, dynamic>> _items = [];
   double _totalStockValue = 0.0; 
+  double _thisMonthSale = 0.0; // Naya variable
 
   @override
   void initState() {
     super.initState();
-    _loadItems();
+    _loadData(); // Sab data ek sath load karenge
   }
 
-  void _loadItems() async {
-    final data = await DatabaseHelper().getAllItems();
+  void _loadData() async {
+    final items = await DatabaseHelper().getAllItems();
     double totalValue = 0;
-    for (var item in data) {
+    for (var item in items) {
       double price = (item['price'] as num).toDouble();
       int stock = (item['stock'] as num).toInt();
       totalValue += (price * stock);
     }
-    setState(() { _items = data; _totalStockValue = totalValue; });
+
+    // Is mahine ki sale nikaalo
+    double monthSale = await DatabaseHelper().getThisMonthSale();
+
+    setState(() { 
+      _items = items; 
+      _totalStockValue = totalValue; 
+      _thisMonthSale = monthSale;
+    });
   }
 
   void _updateStock(int id, int currentStock, bool isIn) async {
     int newStock = isIn ? currentStock + 1 : (currentStock > 0 ? currentStock - 1 : 0);
     await DatabaseHelper().updateItemStock(id, newStock);
-    _loadItems();
+    _loadData();
   }
 
   void _deleteItem(int id) async {
     await DatabaseHelper().deleteItem(id);
-    _loadItems();
+    _loadData();
   }
 
   @override
@@ -46,18 +56,36 @@ class _StockScreenState extends State<StockScreen> {
     return Scaffold(
       body: Column(
         children: [
+          // Upar ka Dashboard (Stock Value + Month Sale)
           Container(
-            width: double.infinity,
             padding: const EdgeInsets.all(16),
             color: Colors.indigo[50],
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                const Text('TOTAL STOCK VALUE', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 5),
-                Text('₹ ${_totalStockValue.toStringAsFixed(1)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
+                // Stock Value
+                Column(
+                  children: [
+                    const Text('STOCK VALUE', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5),
+                    Text('₹ ${_totalStockValue.toStringAsFixed(1)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
+                  ],
+                ),
+                // Divider
+                Container(height: 40, width: 1, color: Colors.grey[400]),
+                // This Month Sale
+                Column(
+                  children: [
+                    const Text('THIS MONTH SOLD', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5),
+                    Text('₹ ${_thisMonthSale.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green[800])),
+                  ],
+                ),
               ],
             ),
           ),
+          
+          // Items List
           Expanded(
             child: _items.isEmpty
                 ? const Center(child: Text('Abhi koi maal nahi hai. Add karo!'))
@@ -77,7 +105,23 @@ class _StockScreenState extends State<StockScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(item['itemName'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(item['itemName'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                    // Edit Button
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                                      onPressed: () async {
+                                        // Edit screen par jao aur result ka wait karo
+                                        final result = await Navigator.push(context, MaterialPageRoute(
+                                          builder: (context) => EditItemScreen(item: item)
+                                        ));
+                                        if (result == true) { _loadData(); } // Agar save hua toh list refresh karo
+                                      },
+                                    ),
+                                  ],
+                                ),
                                 const SizedBox(height: 10),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -126,7 +170,7 @@ class _StockScreenState extends State<StockScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddItemScreen()));
-          _loadItems();
+          _loadData();
         },
         backgroundColor: Colors.indigo,
         child: const Icon(Icons.add, color: Colors.white),
