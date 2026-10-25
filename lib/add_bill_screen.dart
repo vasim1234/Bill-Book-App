@@ -14,7 +14,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
   final _addressController = TextEditingController();
   
   List<Map<String, dynamic>> _stockItems = [];
-  Map<String, dynamic>? _selectedItem;
+  int? _selectedItemId; // Map ki jagah ID use kar rahe hain
   int _quantity = 1;
   double _currentItemPrice = 0.0;
 
@@ -36,12 +36,14 @@ class _AddBillScreenState extends State<AddBillScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka naam likho!')));
       return;
     }
-    if (_selectedItem == null) {
+    if (_selectedItemId == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item select karo!')));
       return;
     }
     
-    if (_selectedItem!['stock'] < _quantity) {
+    final selectedItem = _stockItems.firstWhere((element) => element['id'] == _selectedItemId);
+    
+    if (selectedItem['stock'] < _quantity) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Itna stock nahi hai!')));
       return;
     }
@@ -51,12 +53,12 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
     await DatabaseHelper().insertBill({
       'customerName': _customerController.text,
-      'itemName': _selectedItem!['itemName'],
+      'itemName': selectedItem['itemName'],
       'quantity': _quantity,
       'price': _currentItemPrice,
       'totalAmount': total,
       'date': date,
-      'itemId': _selectedItem!['id'], 
+      'itemId': _selectedItemId, 
     });
 
     Navigator.pop(context); 
@@ -130,21 +132,21 @@ class _AddBillScreenState extends State<AddBillScreen> {
                     ),
                     const SizedBox(height: 16),
                     
-                    // Dropdown to select item (FIXED)
-                    DropdownButtonFormField<Map<String, dynamic>>(
+                    // FIXED Dropdown (Ab ID use ho rahi hai)
+                    DropdownButtonFormField<int>(
                       decoration: const InputDecoration(labelText: "Select Item", border: OutlineInputBorder()),
-                      // Yahan fix kiya gaya hai:
-                      value: _selectedItem == null ? null : _stockItems.firstWhere((element) => element['id'] == _selectedItem!['id'], orElse: () => _stockItems.first),
+                      value: _selectedItemId,
                       items: _stockItems.map((item) {
-                        return DropdownMenuItem<Map<String, dynamic>>(
-                          value: item,
+                        return DropdownMenuItem<int>(
+                          value: item['id'] as int,
                           child: Text("${item['itemName']} (Stock: ${item['stock']})"),
                         );
                       }).toList(),
                       onChanged: (value) {
                         setState(() {
-                          _selectedItem = value;
-                          _currentItemPrice = value!['price'];
+                          _selectedItemId = value;
+                          final selected = _stockItems.firstWhere((element) => element['id'] == value);
+                          _currentItemPrice = selected['price'];
                         });
                       },
                     ),
