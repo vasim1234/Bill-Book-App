@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart'; // QR ke liye
-import 'package:url_launcher/url_launcher.dart'; // WhatsApp ke liye
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'database_helper.dart';
 
 class BillPreviewScreen extends StatefulWidget {
@@ -35,30 +35,20 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     });
   }
 
-  // WhatsApp par bill bhejne ka function
   void _sendWhatsAppBill() async {
     String mobile = _billData!['customerMobile'] ?? "";
     if (mobile.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka mobile number nahi hai!')));
       return;
     }
-
-    // Number format theek karo (91 add karo agar nahi hai)
     if (!mobile.startsWith('91')) mobile = '91$mobile';
-
+    
     String businessName = _settings?['businessName'] ?? "My Dukan";
     String total = _billData!['totalAmount'].toString();
-    String date = _billData!['date'];
-
-    // WhatsApp message text
-    String text = "Namaste ${_billData!['customerName']},\n\n"
-        "Aapka bill details:\n"
-        "Business: $businessName\n"
-        "Date: $date\n"
-        "Total Amount: ₹$total\n\n"
-        "Thank you for shopping with us!";
-
+    
+    String text = "Namaste ${_billData!['customerName']},\n\nAapka bill details:\nBusiness: $businessName\nTotal Amount: ₹$total\n\nThank you!";
     String url = "https://wa.me/$mobile?text=${Uri.encodeComponent(text)}";
+    
     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
@@ -68,33 +58,35 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    String theme = _settings?['theme'] ?? "Modern Boxed";
+    // Default theme agar settings mein set nahi hai
+    String theme = _settings?['theme'] ?? "Modern Boxed"; 
 
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        title: const Text("Bill Preview"),
-        backgroundColor: Colors.indigo,
+        title: const Text("Invoice Preview"),
+        backgroundColor: Colors.indigo[900],
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
+            // Theme ke hisaab se bill design render karo
             if (theme == "Modern Boxed") _buildModernBoxed(),
             if (theme == "Classic Minimal") _buildClassicMinimal(),
             if (theme == "Dark Header") _buildDarkHeader(),
 
             const SizedBox(height: 20),
 
-            // --- ACTION BUTTONS ---
+            // Action Buttons
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thermal Printer connected soon!'))); },
+                onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thermal Printer feature coming next!'))); },
                 icon: const Icon(Icons.print),
-                label: const Text("Thermal Printer / Bluetooth Print"),
+                label: const Text("Thermal Printer / Bluetooth Print", style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
               ),
             ),
@@ -104,7 +96,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF feature coming soon!'))); },
+                    onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF feature coming next!'))); },
                     icon: const Icon(Icons.picture_as_pdf),
                     label: const Text("Save PDF"),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400], foregroundColor: Colors.black),
@@ -113,7 +105,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _sendWhatsAppBill, // WhatsApp logic call kiya
+                    onPressed: _sendWhatsAppBill,
                     icon: const Icon(Icons.message),
                     label: const Text("WhatsApp Bill"),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
@@ -122,7 +114,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -131,6 +122,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 child: const Text("New Sale", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -138,46 +130,133 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // ==========================================
-  // 1. MODERN BOXED THEME
+  // 1. MODERN BOXED THEME (Blue Header)
   // ==========================================
   Widget _buildModernBoxed() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
+    String ownerName = _settings?['ownerName'] ?? "Owner";
+    String mobile = _settings?['mobile'] ?? "";
+    String address = _settings?['address'] ?? "";
+    String upiId = _settings?['upiId'] ?? "";
+
     return Card(
       elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         padding: const EdgeInsets.all(16.0),
-        decoration: const BoxDecoration(color: Colors.white),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.indigo, width: 1),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(businessName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                    const Text("Wholesaler", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text(businessName.toUpperCase(), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                    const SizedBox(height: 2),
+                    const Text("PREMIUM QUALITY", style: TextStyle(fontSize: 10, color: Colors.grey, letterSpacing: 1)),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text("INVOICE", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text("INVOICE", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2)),
                     Text("#INV-${_billData!['id']}", style: const TextStyle(color: Colors.grey)),
                   ],
                 )
               ],
             ),
-            const Divider(thickness: 2, color: Colors.indigo),
-            const SizedBox(height: 10),
-            _buildCustomerDetails(),
+            const SizedBox(height: 15),
+            Container(height: 2, color: Colors.indigo),
+            const SizedBox(height: 15),
+
+            // Customer & Store Details
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("CUSTOMER DETAILS", style: TextStyle(fontSize: 10, color: Colors.indigo, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 5),
+                      Text(_billData!['customerName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text("Ph: ${_billData!['customerMobile']}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("BILLED BY", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 5),
+                      Text(ownerName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(address, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text("Date: ${_billData!['date']}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    ],
+                  ),
+                )
+              ],
+            ),
             const SizedBox(height: 20),
-            _buildItemTable(),
-            const Divider(),
-            _buildGrandTotal(),
+
+            // Table Header
+            Container(
+              color: Colors.indigo[50],
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+              child: const Row(
+                children: [
+                  Expanded(flex: 4, child: Text("ITEM DESCRIPTION", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.indigo))),
+                  Expanded(flex: 1, child: Text("QTY", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.indigo))),
+                  Expanded(flex: 2, child: Text("RATE", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.indigo))),
+                  Expanded(flex: 2, child: Text("AMOUNT", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.indigo))),
+                ],
+              ),
+            ),
+
+            // Table Items
+            ..._billItems.map((item) {
+              double amount = item['price'] * item['quantity'];
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey[200]!))),
+                child: Row(
+                  children: [
+                    Expanded(flex: 4, child: Text(item['itemName'], style: const TextStyle(fontWeight: FontWeight.w500))),
+                    Expanded(flex: 1, child: Text(item['quantity'].toString(), textAlign: TextAlign.center)),
+                    Expanded(flex: 2, child: Text("₹${item['price']}", textAlign: TextAlign.right)),
+                    Expanded(flex: 2, child: Text("₹${amount.toStringAsFixed(2)}", textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                ),
+              );
+            }),
+
+            const SizedBox(height: 15),
+
+            // Total
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text("TOTAL AMOUNT", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text("₹${_billData!['totalAmount']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.indigo)),
+                  ],
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
-            _buildQrAndFooter(businessName),
+            _buildQrAndFooter(businessName, upiId),
           ],
         ),
       ),
@@ -185,31 +264,97 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // ==========================================
-  // 2. CLASSIC MINIMAL THEME
+  // 2. CLASSIC MINIMAL THEME (White)
   // ==========================================
   Widget _buildClassicMinimal() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
+    String address = _settings?['address'] ?? "";
+    String upiId = _settings?['upiId'] ?? "";
+
     return Card(
-      elevation: 4,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       child: Container(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24.0),
         decoration: const BoxDecoration(color: Colors.white),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(businessName, style: const TextStyle(fontSize: 22, letterSpacing: 2, fontWeight: FontWeight.w300)),
-            const Text("PREMIUM SHOWROOM", style: TextStyle(fontSize: 10, color: Colors.grey, letterSpacing: 1.5)),
+            Center(
+              child: Column(
+                children: [
+                  Text(businessName.toUpperCase(), style: const TextStyle(fontSize: 24, letterSpacing: 3, fontWeight: FontWeight.w300)),
+                  const Text("PREMIUM SHOWROOM", style: TextStyle(fontSize: 10, color: Colors.grey, letterSpacing: 2)),
+                  const SizedBox(height: 5),
+                  Text(address, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 15),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("BILL TO:", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text(_billData!['customerName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(_billData!['customerMobile'], style: const TextStyle(color: Colors.grey)),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text("DATE:", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text(_billData!['date']),
+                    Text("INV: #${_billData!['id']}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                )
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Table Header
+            const Row(
+              children: [
+                Expanded(flex: 4, child: Text("ITEM", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                Expanded(flex: 1, child: Text("QTY", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                Expanded(flex: 2, child: Text("PRICE", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                Expanded(flex: 2, child: Text("AMOUNT", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              ],
+            ),
+            const Divider(),
+            
+            ..._billItems.map((item) {
+              double amount = item['price'] * item['quantity'];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(flex: 4, child: Text(item['itemName'])),
+                    Expanded(flex: 1, child: Text(item['quantity'].toString(), textAlign: TextAlign.center)),
+                    Expanded(flex: 2, child: Text("₹${item['price']}", textAlign: TextAlign.right)),
+                    Expanded(flex: 2, child: Text("₹${amount.toStringAsFixed(2)}", textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                ),
+              );
+            }),
+            
             const Divider(),
             const SizedBox(height: 10),
-            _buildCustomerDetails(),
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text("TOTAL: ₹${_billData!['totalAmount']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+              ],
+            ),
+            
             const SizedBox(height: 20),
-            _buildItemTable(),
-            const SizedBox(height: 20),
-            _buildGrandTotal(),
-            const SizedBox(height: 20),
-            const Divider(),
-            _buildQrAndFooter(businessName),
+            _buildQrAndFooter(businessName, upiId),
           ],
         ),
       ),
@@ -221,35 +366,103 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   // ==========================================
   Widget _buildDarkHeader() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
+    String address = _settings?['address'] ?? "";
+    String upiId = _settings?['upiId'] ?? "";
+
     return Card(
       elevation: 4,
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
+          // Dark Header
           Container(
-            padding: const EdgeInsets.all(16.0),
-            color: const Color(0xFF1E293B),
+            padding: const EdgeInsets.all(20.0),
+            color: const Color(0xFF1E293B), // Dark Slate
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(businessName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                const Text("INVOICE", style: TextStyle(fontSize: 16, color: Colors.white70)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(businessName.toUpperCase(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(address, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                  ],
+                ),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text("INVOICE", style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                  ],
+                )
               ],
             ),
           ),
+          // Body
           Container(
             padding: const EdgeInsets.all(16.0),
             color: Colors.white,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCustomerDetails(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("BILL TO", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                        Text(_billData!['customerName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(_billData!['customerMobile'], style: const TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text("DATE", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                        Text(_billData!['date'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    )
+                  ],
+                ),
                 const SizedBox(height: 20),
-                _buildItemTable(),
+                
+                // Table
+                Container(
+                  color: Colors.grey[100],
+                  padding: const EdgeInsets.all(8),
+                  child: const Row(
+                    children: [
+                      Expanded(flex: 4, child: Text("ITEM", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                      Expanded(flex: 1, child: Text("QTY", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                      Expanded(flex: 2, child: Text("AMOUNT", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                    ],
+                  ),
+                ),
+                
+                ..._billItems.map((item) {
+                  double amount = item['price'] * item['quantity'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    child: Row(
+                      children: [
+                        Expanded(flex: 4, child: Text(item['itemName'])),
+                        Expanded(flex: 1, child: Text(item['quantity'].toString(), textAlign: TextAlign.center)),
+                        Expanded(flex: 2, child: Text("₹${amount.toStringAsFixed(2)}", textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+                      ],
+                    ),
+                  );
+                }),
+                
                 const Divider(),
-                _buildGrandTotal(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text("₹${_billData!['totalAmount']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+                  ],
+                ),
                 const SizedBox(height: 20),
-                _buildQrAndFooter(businessName),
+                _buildQrAndFooter(businessName, upiId),
               ],
             ),
           ),
@@ -259,97 +472,22 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // ==========================================
-  // COMMON WIDGETS
+  // COMMON FOOTER & QR
   // ==========================================
-  Widget _buildCustomerDetails() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("BILL TO:", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-            Text(_billData!['customerName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Text("Mo: ${_billData!['customerMobile']}", style: const TextStyle(color: Colors.grey)),
-          ],
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Text("DATE:", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-            Text(_billData!['date']),
-            Text("Status: ${_billData!['paymentStatus']}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _buildItemTable() {
-    return Column(
-      children: [
-        Container(
-          color: Colors.grey[100],
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-          child: const Row(
-            children: [
-              Expanded(flex: 3, child: Text("ITEM", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              Expanded(flex: 1, child: Text("QTY", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              Expanded(flex: 2, child: Text("PRICE", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              Expanded(flex: 2, child: Text("AMOUNT", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-            ],
-          ),
-        ),
-        ..._billItems.map((item) {
-          double amount = item['price'] * item['quantity'];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-            child: Row(
-              children: [
-                Expanded(flex: 3, child: Text(item['itemName'])),
-                Expanded(flex: 1, child: Text(item['quantity'].toString(), textAlign: TextAlign.center)),
-                Expanded(flex: 2, child: Text("₹${item['price']}", textAlign: TextAlign.right)),
-                Expanded(flex: 2, child: Text("₹${amount.toStringAsFixed(2)}", textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
-              ],
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildGrandTotal() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          const Text("GRAND TOTAL: ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          Text("₹${_billData!['totalAmount']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.indigo)),
-        ],
-      ),
-    );
-  }
-
-  // QR Code aur Footer
-  Widget _buildQrAndFooter(String businessName) {
-    String upiId = _settings?['upiId'] ?? "";
+  Widget _buildQrAndFooter(String businessName, String upiId) {
     String totalAmount = _billData!['totalAmount'].toString();
-    
-    // UPI Link format: upi://pay?pa=upi_id&pn=Business_Name&am=Amount&cu=INR
     String upiLink = "upi://pay?pa=$upiId&pn=$businessName&am=$totalAmount&cu=INR";
 
     return Center(
       child: Column(
         children: [
           if (upiId.isNotEmpty) ...[
-            const Text("SCAN TO PAY", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            const Text("SCAN TO PAY", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.grey)),
             const SizedBox(height: 5),
-            // QR Code Widget
             QrImageView(
               data: upiLink,
               version: QrVersions.auto,
-              size: 120.0,
+              size: 100.0,
             ),
             Text(upiId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
             const SizedBox(height: 10),
