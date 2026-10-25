@@ -14,6 +14,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _mobileController = TextEditingController();
   final _addressController = TextEditingController();
   final _upiController = TextEditingController();
+  
+  String _selectedTheme = "Modern Boxed"; // Default Theme
+
+  final List<String> _themes = [
+    "Modern Boxed",
+    "Classic Minimal",
+    "Dark Header"
+  ];
 
   @override
   void initState() {
@@ -30,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _mobileController.text = data['mobile'] ?? "";
         _addressController.text = data['address'] ?? "";
         _upiController.text = data['upiId'] ?? "";
+        _selectedTheme = data['theme'] ?? "Modern Boxed"; // Purana theme load karo
       });
     }
   }
@@ -41,8 +50,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'mobile': _mobileController.text,
       'address': _addressController.text,
       'upiId': _upiController.text,
+      'theme': _selectedTheme, // Theme save karo
     });
-    Navigator.pop(context, true); // Wapas jao aur batao ki save ho gaya
+    Navigator.pop(context, true);
   }
 
   @override
@@ -77,6 +87,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 10),
                 TextField(controller: _upiController, decoration: const InputDecoration(labelText: "UPI ID (For QR)")),
                 const SizedBox(height: 20),
+                
+                // --- NAYA DROPDOWN (Bill Theme) ---
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: "Invoice Theme", border: OutlineInputBorder()),
+                  value: _selectedTheme,
+                  items: _themes.map((theme) {
+                    return DropdownMenuItem(value: theme, child: Text(theme));
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() { _selectedTheme = value!; });
+                  },
+                ),
+                const SizedBox(height: 20),
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
