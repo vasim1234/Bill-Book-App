@@ -53,18 +53,19 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_billData == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
+Widget build(BuildContext context) {
+  if (_billData == null) {
+    return const Center(child: CircularProgressIndicator());
+  }
 
-    String theme = _settings?['theme'] ?? "Modern Boxed"; 
+  String theme = _settings?['theme'] ?? "Modern Boxed"; 
 
-    // Humne yahan Scaffold ka apna AppBar hata diya hai
-    return Container(
-      color: Colors.grey[200],
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(12.0),
+  // Yahan se apna Scaffold aur AppBar hata diya hai
+  return Container(
+    color: Colors.grey[200],
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(12.0),
+      // ... baaki code waisa hi rahega
         child: Column(
           children: [
             // Theme ke hisaab se bill design render karo
