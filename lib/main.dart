@@ -4,6 +4,7 @@ import 'add_bill_screen.dart';
 import 'stock_screen.dart';
 import 'settings_screen.dart';
 import 'cash_screen.dart'; 
+import 'bill_preview_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,6 +23,13 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[100]
       ),
       home: const MainNavigationScreen(), 
+      // Yahan routes add kiya hai
+      routes: {
+        '/bill_preview': (context) {
+          final billId = ModalRoute.of(context)!.settings.arguments as int;
+          return BillPreviewScreen(billId: billId);
+        },
+      },
     );
   }
 }
@@ -37,6 +45,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   String _businessName = "My Dukan"; 
 
+  // Ab yahan 'BillPreviewScreen' nahi hoga, wo routes se khulega
   final List<Widget> _screens = [
     const CashScreen(),       
     const StockScreen(),      
