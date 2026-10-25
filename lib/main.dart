@@ -4,7 +4,6 @@ import 'add_bill_screen.dart';
 import 'stock_screen.dart';
 import 'settings_screen.dart';
 import 'cash_screen.dart'; 
-import 'bill_preview_screen.dart'; // Import zaroori hai check ke liye
 
 void main() {
   runApp(const MyApp());
@@ -62,12 +61,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check karo ki kya hum BillPreviewScreen par hain?
-    // Agar haan, toh AppBar aur BottomBar hide kar do.
-    bool isBillScreen = ModalRoute.of(context)?.settings.name == '/bill_preview';
-
     return Scaffold(
-      appBar: isBillScreen ? null : AppBar(
+      appBar: AppBar(
         title: Row(
           children: [
             const Icon(Icons.store, color: Colors.white),
@@ -88,9 +83,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           )
         ],
       ),
-      drawer: isBillScreen ? null : const SettingsScreen(),
+      drawer: const SettingsScreen(),
       body: _screens[_currentIndex],
-      bottomNavigationBar: isBillScreen ? null : BottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -108,7 +103,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
         ],
       ),
-      floatingActionButton: isBillScreen ? null : FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
           setState(() { _currentIndex = 0; }); 
