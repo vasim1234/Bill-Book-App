@@ -61,7 +61,6 @@ class DatabaseHelper {
     return await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [id]);
   }
 
-  // Purana deleteItem function wapas add kiya
   Future<int> deleteItem(int id) async {
     Database db = await database;
     return await db.delete('items', where: 'id = ?', whereArgs: [id]);
@@ -82,7 +81,8 @@ class DatabaseHelper {
   }
 
   // --- MULTI-ITEM BILL FUNCTIONS ---
-  Future<void> saveFullBill(Map<String, dynamic> billData, List<Map<String, dynamic>> billItems) async {
+  // Yahan Future<int> kiya hai taaki Bill ID wapas mile
+  Future<int> saveFullBill(Map<String, dynamic> billData, List<Map<String, dynamic>> billItems) async {
     Database db = await database;
     
     // 1. Bill ko save karo
@@ -102,6 +102,9 @@ class DatabaseHelper {
         await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [stockData.first['id']]);
       }
     }
+    
+    // Bill ID return karo
+    return billId;
   }
 
   // --- KHATA (Bill History) ---
@@ -110,10 +113,15 @@ class DatabaseHelper {
     return await db.query('bills', orderBy: 'id DESC');
   }
 
-  // Purana deleteBill function wapas add kiya
   Future<int> deleteBill(int id) async {
     Database db = await database;
     await db.delete('bill_items', where: 'billId = ?', whereArgs: [id]);
     return await db.delete('bills', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Bill ke items nikalne ke liye (Preview screen ke liye)
+  Future<List<Map<String, dynamic>>> getBillItems(int billId) async {
+    Database db = await database;
+    return await db.query('bill_items', where: 'billId = ?', whereArgs: [billId]);
   }
 }
