@@ -44,11 +44,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   // Asli screens (Yahan StaffScreen add kar diya)
   final List<Widget> _screens = [
-    const CashScreen(),       
-    const StockScreen(),      
-    const Center(child: Text("Quick Add (Coming Soon)")),  
-    const StaffScreen(), // <--- Staff Screen yahan add ho gaya
-  ];
+  const CashScreen(),       
+  const StockScreen(),      
+  const Center(child: Text("Quick Add (Coming Soon)")),  
+  const Center(child: Text("Add Bill Screen (Coming Soon)")), // Add button ke liye jagah
+  const StaffScreen(), 
+];
 
   @override
   void initState() {
