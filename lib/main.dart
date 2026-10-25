@@ -31,7 +31,7 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
-  String _businessName = "My Dukan"; // Default naam
+  String _businessName = "My Dukan"; 
 
   final List<Widget> _screens = [
     const KhataScreen(),
@@ -67,23 +67,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             Text(_businessName, style: const TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
-        backgroundColor: Colors.indigo[900], // Dark blue
+        backgroundColor: Colors.indigo[900], 
         foregroundColor: Colors.white,
         actions: [
-  Builder(
-    builder: (context) => IconButton(
-      icon: const Icon(Icons.settings),
-      onPressed: () {
-        // Sirf drawer kholo, await hata do
-        Scaffold.of(context).openDrawer();
-      },
-    ),
-  )
-],
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            ),
+          )
+        ],
       ),
-      // Ye Drawer ko sidebar ke liye call karta hai
       drawer: SettingsScreen(),
-      
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -103,8 +100,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
         ],
       ),
-      
-      // Bada "+" button (Sale ke liye)
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
@@ -118,12 +113,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
-// ==========================================
-// KHATA SCREEN (Jo humne pehle banaya tha)
-// ==========================================
 class KhataScreen extends StatefulWidget {
   const KhataScreen({super.key});
-
   @override
   State<KhataScreen> createState() => _KhataScreenState();
 }
@@ -144,10 +135,7 @@ class _KhataScreenState extends State<KhataScreen> {
     for (var bill in data) {
       total += (bill['totalAmount'] as num).toDouble();
     }
-    setState(() {
-      _bills = data;
-      _totalAmount = total;
-    });
+    setState(() { _bills = data; _totalAmount = total; });
   }
 
   void _deleteBill(int id) async {
@@ -185,14 +173,12 @@ class _KhataScreenState extends State<KhataScreen> {
                         padding: const EdgeInsets.only(right: 20),
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
-                      onDismissed: (direction) {
-                        _deleteBill(bill['id']);
-                      },
+                      onDismissed: (direction) { _deleteBill(bill['id']); },
                       child: Card(
                         margin: const EdgeInsets.all(8),
                         child: ListTile(
                           title: Text("${bill['customerName']} - ₹${bill['totalAmount']}"),
-                          subtitle: Text("${bill['itemName']} x ${bill['quantity']}"),
+                          subtitle: Text("Status: ${bill['paymentStatus'] ?? 'UNPAID'}"),
                           trailing: Text(bill['date']),
                         ),
                       ),
