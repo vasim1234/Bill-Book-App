@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
+import 'staff_detail_screen.dart'; // Ye import zaroori hai
 
 class StaffScreen extends StatefulWidget {
   const StaffScreen({super.key});
@@ -128,6 +129,13 @@ class _StaffScreenState extends State<StaffScreen> {
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         child: ListTile(
+                          // Yahan onTap add kiya hai
+                          onTap: () async {
+                            await Navigator.push(context, MaterialPageRoute(
+                              builder: (context) => StaffDetailScreen(staff: staff)
+                            ));
+                            _loadData(); // Wapas aane par data refresh karo
+                          },
                           leading: CircleAvatar(backgroundColor: Colors.indigo[100], child: Text(staff['name'][0])),
                           title: Text(staff['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text("Mo: ${staff['mobile']} | ₹${staff['dailyWage']}/day"),
