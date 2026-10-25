@@ -180,112 +180,119 @@ class _CashScreenState extends State<CashScreen> {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Naya Lena-Dena", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
-              const SizedBox(height: 15),
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: "Bande ka Naam", border: OutlineInputBorder())),
-              const SizedBox(height: 10),
-              Row(
+        // StatefulBuilder use kiya taaki popup ke andar color change ho sake
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(child: TextField(controller: mobileController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: "Mobile", border: OutlineInputBorder()))),
-                  const SizedBox(width: 10),
-                  Expanded(child: TextField(controller: amountController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Amount (₹)", border: OutlineInputBorder()))),
-                ],
-              ),
-              const SizedBox(height: 10),
-              TextField(controller: noteController, decoration: const InputDecoration(labelText: "Wajah / Note", border: OutlineInputBorder())),
-              const SizedBox(height: 15),
-              
-              // Type Selector (Diya / Liya)
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => transactionType = "DIYA"),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: transactionType == "DIYA" ? Colors.red[50] : Colors.white,
-                          border: Border.all(color: transactionType == "DIYA" ? Colors.red : Colors.grey),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Column(
-                          children: [
-                            Text("🔴 Diya", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                            Text("UDHAAR LENE HAIN", style: TextStyle(fontSize: 10, color: Colors.red)),
-                          ],
+                  const Text("Naya Lena-Dena", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
+                  const SizedBox(height: 15),
+                  TextField(controller: nameController, decoration: const InputDecoration(labelText: "Bande ka Naam", border: OutlineInputBorder())),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(child: TextField(controller: mobileController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: "Mobile", border: OutlineInputBorder()))),
+                      const SizedBox(width: 10),
+                      Expanded(child: TextField(controller: amountController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Amount (₹)", border: OutlineInputBorder()))),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(controller: noteController, decoration: const InputDecoration(labelText: "Wajah / Note", border: OutlineInputBorder())),
+                  const SizedBox(height: 15),
+                  
+                  // Type Selector (Diya / Liya)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => transactionType = "DIYA"),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: transactionType == "DIYA" ? Colors.red[50] : Colors.white,
+                              border: Border.all(color: transactionType == "DIYA" ? Colors.red : Colors.grey),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              children: [
+                                Text("🔴 Diya", style: TextStyle(fontWeight: FontWeight.bold, color: transactionType == "DIYA" ? Colors.red : Colors.grey)),
+                                Text("UDHAAR LENE HAIN", style: TextStyle(fontSize: 10, color: transactionType == "DIYA" ? Colors.red : Colors.grey)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => transactionType = "LIYA"),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: transactionType == "LIYA" ? Colors.green[50] : Colors.white,
-                          border: Border.all(color: transactionType == "LIYA" ? Colors.green : Colors.grey),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Column(
-                          children: [
-                            Text("🟢 Liya", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                            Text("ADVANCE DENE HAIN", style: TextStyle(fontSize: 10, color: Colors.green)),
-                          ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => transactionType = "LIYA"),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: transactionType == "LIYA" ? Colors.green[50] : Colors.white,
+                              border: Border.all(color: transactionType == "LIYA" ? Colors.green : Colors.grey),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              children: [
+                                Text("🟢 Liya", style: TextStyle(fontWeight: FontWeight.bold, color: transactionType == "LIYA" ? Colors.green : Colors.grey)),
+                                Text("ADVANCE DENE HAIN", style: TextStyle(fontSize: 10, color: transactionType == "LIYA" ? Colors.green : Colors.grey)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (nameController.text.isNotEmpty && amountController.text.isNotEmpty) {
+                          // 1. Customer check karo, nahi toh naya banao
+                          int customerId;
+                          final existing = await DatabaseHelper().getAllCustomers();
+                          var found = existing.where((c) => c['name'].toString().toLowerCase() == nameController.text.toLowerCase()).toList();
+                          
+                          if (found.isNotEmpty) {
+                            customerId = found.first['id'];
+                          } else {
+                            customerId = await DatabaseHelper().insertCustomer({
+                              'name': nameController.text,
+                              'mobile': mobileController.text,
+                            });
+                          }
+
+                          // 2. Transaction save karo
+                          await DatabaseHelper().insertTransaction({
+                            'customerId': customerId,
+                            'amount': double.parse(amountController.text),
+                            'type': transactionType,
+                            'note': noteController.text,
+                            'date': DateTime.now().toString(),
+                          });
+
+                          Navigator.pop(context);
+                          _loadData();
+                        } else {
+                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Naam aur Amount likhna zaroori hai!')));
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green[800], foregroundColor: Colors.white),
+                      child: const Text("Save Transaction", style: TextStyle(fontSize: 18)),
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
-              const SizedBox(height: 20),
-              
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.isNotEmpty && amountController.text.isNotEmpty) {
-                      // 1. Customer check karo, nahi toh naya banao
-                      int customerId;
-                      final existing = await DatabaseHelper().getAllCustomers();
-                      var found = existing.where((c) => c['name'].toString().toLowerCase() == nameController.text.toLowerCase()).toList();
-                      
-                      if (found.isNotEmpty) {
-                        customerId = found.first['id'];
-                      } else {
-                        customerId = await DatabaseHelper().insertCustomer({
-                          'name': nameController.text,
-                          'mobile': mobileController.text,
-                        });
-                      }
-
-                      // 2. Transaction save karo
-                      await DatabaseHelper().insertTransaction({
-                        'customerId': customerId,
-                        'amount': double.parse(amountController.text),
-                        'type': transactionType,
-                        'note': noteController.text,
-                        'date': DateTime.now().toString(),
-                      });
-
-                      Navigator.pop(context);
-                      _loadData();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green[800], foregroundColor: Colors.white),
-                  child: const Text("Save Transaction", style: TextStyle(fontSize: 18)),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            );
+          }
         );
       },
     );
