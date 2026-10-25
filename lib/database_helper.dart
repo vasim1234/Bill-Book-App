@@ -18,7 +18,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
     return await openDatabase(
       path,
-      version: 6, // Version 6 kar diya (Staff Payments ke liye)
+      version: 7, // Version 7 kar diya (Users/Login ke liye)
       onCreate: (db, version) async {
         // Purane Tables
         await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
@@ -29,9 +29,10 @@ class DatabaseHelper {
         await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
         await db.execute('CREATE TABLE staff(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, dailyWage REAL)');
         await db.execute('CREATE TABLE attendance(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, date TEXT, status TEXT, paymentStatus TEXT)');
-        
-        // Nayi Table (Staff Payments)
         await db.execute('CREATE TABLE staff_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, amount REAL, note TEXT, date TEXT)');
+        
+        // Nayi Table (Login ke liye)
+        await db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -52,8 +53,29 @@ class DatabaseHelper {
         if (oldVersion < 6) {
           await db.execute('CREATE TABLE staff_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, amount REAL, note TEXT, date TEXT)');
         }
+        if (oldVersion < 7) {
+          await db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)');
+        }
       }
     );
+  }
+
+  // ================= USER AUTH FUNCTIONS (Naya) =================
+
+  Future<int> registerUser(String email, String password) async {
+    Database db = await database;
+    return await db.insert('users', {'email': email, 'password': password});
+  }
+
+  Future<Map<String, dynamic>?> loginUser(String email, String password) async {
+    Database db = await database;
+    List<Map<String, dynamic>> result = await db.query(
+      'users', 
+      where: 'email = ? AND password = ?', 
+      whereArgs: [email, password]
+    );
+    if (result.isNotEmpty) return result.first;
+    return null;
   }
 
   // ================= CASH / KHATA FUNCTIONS =================
@@ -109,7 +131,6 @@ class DatabaseHelper {
     return balance;
   }
 
-  // Customer ki detail update karne ke liye
   Future<int> updateCustomer(int id, String name, String mobile) async {
     Database db = await database;
     return await db.update('customers', {'name': name, 'mobile': mobile}, where: 'id = ?', whereArgs: [id]);
@@ -125,7 +146,6 @@ class DatabaseHelper {
   
   Future<int> deleteItem(int id) async { Database db = await database; return await db.delete('items', where: 'id = ?', whereArgs: [id]); }
 
-  // 1. Item ko Edit karne ke liye
   Future<int> updateItem(int id, String name, double price, int stock) async {
     Database db = await database;
     return await db.update(
@@ -136,7 +156,6 @@ class DatabaseHelper {
     );
   }
 
-  // 2. Is mahine ki Total Sale nikalne ke liye
   Future<double> getThisMonthSale() async {
     Database db = await database;
     String currentMonth = DateTime.now().toString().substring(0, 7); 
@@ -217,30 +236,28 @@ class DatabaseHelper {
     await db.delete('staff_payments', where: 'staffId = ?', whereArgs: [staffId]);
     return await db.delete('staff', where: 'id = ?', whereArgs: [staffId]);
   }
-// Staff ki total haazri aur bani hui salary nikalne ke liye
-Future<Map<String, dynamic>> getStaffAttendanceSummary(int staffId) async {
-  Database db = await database;
-  
-  // Staff ki daily wage nikaalo
-  List<Map<String, dynamic>> staffData = await db.query('staff', where: 'id = ?', whereArgs: [staffId]);
-  double dailyWage = 0.0;
-  if (staffData.isNotEmpty) {
-    dailyWage = (staffData.first['dailyWage'] as num).toDouble();
+
+  Future<Map<String, dynamic>> getStaffAttendanceSummary(int staffId) async {
+    Database db = await database;
+    
+    List<Map<String, dynamic>> staffData = await db.query('staff', where: 'id = ?', whereArgs: [staffId]);
+    double dailyWage = 0.0;
+    if (staffData.isNotEmpty) {
+      dailyWage = (staffData.first['dailyWage'] as num).toDouble();
+    }
+
+    List<Map<String, dynamic>> presentData = await db.query(
+      'attendance', 
+      where: 'staffId = ? AND status = ?', 
+      whereArgs: [staffId, 'Present']
+    );
+    
+    int presentDays = presentData.length;
+    double totalEarned = presentDays * dailyWage;
+
+    return {
+      'presentDays': presentDays,
+      'totalEarned': totalEarned,
+    };
   }
-
-  // Sirf 'Present' haazri count karo
-  List<Map<String, dynamic>> presentData = await db.query(
-    'attendance', 
-    where: 'staffId = ? AND status = ?', 
-    whereArgs: [staffId, 'Present']
-  );
-  
-  int presentDays = presentData.length;
-  double totalEarned = presentDays * dailyWage;
-
-  return {
-    'presentDays': presentDays,
-    'totalEarned': totalEarned,
-  };
-}
 }
