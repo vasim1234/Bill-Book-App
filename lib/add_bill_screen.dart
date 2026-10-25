@@ -71,32 +71,30 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   void _saveFinalBill() async {
-    if (_customerController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka naam likho!')));
-      return;
-    }
-    if (_billItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Koi item add nahi kiya!')));
-      return;
-    }
+  if (_customerController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka naam likho!')));
+    return;
+  }
+  if (_billItems.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Koi item add nahi kiya!')));
+    return;
+  }
 
-    String date = DateTime.now().toString().substring(0, 10);
+  String date = DateTime.now().toString().substring(0, 10);
 
-    // Database mein save karo aur Bill ID return karo
-    int billId = await DatabaseHelper().saveFullBill(
-      {
-        'customerName': _customerController.text,
-        'customerMobile': _mobileController.text,
-        'totalAmount': _grandTotal,
-        'date': date,
-        'paymentStatus': _paymentStatus,
-      },
-      _billItems,
-    );
+  int billId = await DatabaseHelper().saveFullBill(
+    {
+      'customerName': _customerController.text,
+      'customerMobile': _mobileController.text,
+      'totalAmount': _grandTotal,
+      'date': date,
+      'paymentStatus': _paymentStatus,
+    },
+    _billItems,
+  );
 
-    // Save hone ke baad Named Route se Preview par bhejo
-    // Isse upar aur neeche ke bars wahi rahenge
-    Navigator.pushReplacementNamed(context, '/bill_preview', arguments: billId);
+  // Yahan hum screen ko pop kar rahe hain aur billId wapas bhej rahe hain
+  Navigator.pop(context, billId); 
   }
 
   @override
