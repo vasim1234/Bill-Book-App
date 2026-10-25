@@ -11,12 +11,15 @@ class AddBillScreen extends StatefulWidget {
 class _AddBillScreenState extends State<AddBillScreen> {
   final _customerController = TextEditingController();
   final _mobileController = TextEditingController();
-  final _addressController = TextEditingController();
   
   List<Map<String, dynamic>> _stockItems = [];
-  int? _selectedItemId; // Map ki jagah ID use kar rahe hain
+  List<Map<String, dynamic>> _billItems = []; // Cart
+  
+  int? _selectedItemId;
   int _quantity = 1;
   double _currentItemPrice = 0.0;
+  
+  String _paymentStatus = "UNPAID"; // Default
 
   @override
   void initState() {
@@ -31,35 +34,65 @@ class _AddBillScreenState extends State<AddBillScreen> {
     });
   }
 
-  void _saveBill() async {
-    if (_customerController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka naam likho!')));
-      return;
+  double get _grandTotal {
+    double total = 0;
+    for (var item in _billItems) {
+      total += (item['price'] * item['quantity']);
     }
+    return total;
+  }
+
+  void _addItemToCart() {
     if (_selectedItemId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item select karo!')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pehle item select karo!')));
       return;
     }
     
     final selectedItem = _stockItems.firstWhere((element) => element['id'] == _selectedItemId);
     
+    // Check stock
     if (selectedItem['stock'] < _quantity) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Itna stock nahi hai!')));
       return;
     }
 
-    double total = _currentItemPrice * _quantity;
+    setState(() {
+      _billItems.add({
+        'itemName': selectedItem['itemName'],
+        'quantity': _quantity,
+        'price': _currentItemPrice,
+      });
+      
+      // Reset fields
+      _selectedItemId = null;
+      _quantity = 1;
+      _currentItemPrice = 0.0;
+    });
+  }
+
+  void _saveFinalBill() async {
+    if (_customerController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka naam likho!')));
+      return;
+    }
+    if (_billItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Koi item add nahi kiya!')));
+      return;
+    }
+
     String date = DateTime.now().toString().substring(0, 10);
 
-    await DatabaseHelper().insertBill({
-      'customerName': _customerController.text,
-      'itemName': selectedItem['itemName'],
-      'quantity': _quantity,
-      'price': _currentItemPrice,
-      'totalAmount': total,
-      'date': date,
-      'itemId': _selectedItemId, 
-    });
+    // Naya function call ho raha hai
+    await DatabaseHelper().saveFullBill(
+      {
+        'customerName': _customerController.text,
+        'customerMobile': _mobileController.text,
+        'totalAmount': _grandTotal,
+        'date': date,
+        'paymentStatus': _paymentStatus,
+      },
+      _billItems,
+    );
 
     Navigator.pop(context); 
   }
@@ -73,68 +106,45 @@ class _AddBillScreenState extends State<AddBillScreen> {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Customer Details Section
+            // --- CUSTOMER DETAILS ---
             Card(
-              elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.person, color: Colors.indigo),
-                        SizedBox(width: 8),
-                        Text("Customer Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                    const Text("Customer Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                    const SizedBox(height: 10),
                     TextField(
                       controller: _customerController,
                       decoration: const InputDecoration(labelText: "Customer Name", border: OutlineInputBorder()),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     TextField(
                       controller: _mobileController,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(labelText: "Mobile Number (Optional)", border: OutlineInputBorder()),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _addressController,
-                      decoration: const InputDecoration(labelText: "Address (Optional)", border: OutlineInputBorder()),
-                    ),
                   ],
                 ),
               ),
             ),
-            
-            const SizedBox(height: 16),
 
-            // Items Section
+            // --- ITEMS JODEIN (Add to Cart) ---
             Card(
-              elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.shopping_bag, color: Colors.indigo),
-                        SizedBox(width: 8),
-                        Text("Items Jodein", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // FIXED Dropdown (Ab ID use ho rahi hai)
+                    const Text("Items Jodein", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                    const SizedBox(height: 10),
+                    // Dropdown
                     DropdownButtonFormField<int>(
-                      decoration: const InputDecoration(labelText: "Select Item", border: OutlineInputBorder()),
+                      decoration: const InputDecoration(labelText: "-- Select Item --", border: OutlineInputBorder()),
                       value: _selectedItemId,
                       items: _stockItems.map((item) {
                         return DropdownMenuItem<int>(
@@ -150,66 +160,137 @@ class _AddBillScreenState extends State<AddBillScreen> {
                         });
                       },
                     ),
-                    
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         // Price
                         Expanded(
                           child: TextField(
                             readOnly: true,
-                            controller: TextEditingController(text: _currentItemPrice.toString()),
-                            decoration: const InputDecoration(labelText: "Price (₹)", border: OutlineInputBorder()),
+                            controller: TextEditingController(text: "₹$_currentItemPrice"),
+                            decoration: const InputDecoration(labelText: "Price", border: OutlineInputBorder()),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        // Quantity
+                        const SizedBox(width: 10),
+                        // Qty
                         Expanded(
                           child: TextField(
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(labelText: "Quantity", border: OutlineInputBorder()),
                             controller: TextEditingController(text: _quantity.toString()),
-                            onChanged: (value) {
-                              setState(() {
-                                _quantity = int.tryParse(value) ?? 1;
-                              });
+                            decoration: const InputDecoration(labelText: "Qty", border: OutlineInputBorder()),
+                            onChanged: (val) {
+                              setState(() { _quantity = int.tryParse(val) ?? 1; });
                             },
                           ),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 20),
-                    
-                    // Total Amount Show
-                    Text(
-                      "Total Amount: ₹${(_currentItemPrice * _quantity).toStringAsFixed(2)}",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
-                    )
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _addItemToCart,
+                        icon: const Icon(Icons.add),
+                        label: const Text("+ Add to Bill"),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[50], foregroundColor: Colors.indigo),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 24),
-
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _saveBill,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            // --- BILL TALLY (Cart List) ---
+            if (_billItems.isNotEmpty)
+              Card(
+                color: Colors.indigo[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Bill Tally (${_billItems.length} Items)", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.indigo)),
+                      const Divider(color: Colors.indigo),
+                      ..._billItems.map((item) {
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(item['itemName'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text("${item['quantity']} Pcs x ₹${item['price']}"),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text("₹${(item['quantity'] * item['price']).toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.red),
+                                onPressed: () {
+                                  setState(() { _billItems.remove(item); });
+                                },
+                              )
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
-                child: const Text("Save Bill", style: TextStyle(fontSize: 18)),
               ),
-            )
+
+            // --- PAYMENT STATUS & TOTAL ---
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const Text("PAYMENT STATUS", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12)),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildPayButton("UNPAID", Colors.red),
+                        _buildPayButton("CASH", Colors.green),
+                        _buildPayButton("UPI", Colors.blue),
+                      ],
+                    ),
+                    const Divider(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Grand Total:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text("₹${_grandTotal.toStringAsFixed(2)}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _saveFinalBill,
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+                        child: const Text("Generate Final Bill", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPayButton(String status, Color color) {
+    bool isSelected = _paymentStatus == status;
+    return GestureDetector(
+      onTap: () { setState(() { _paymentStatus = status; }); },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+          border: Border.all(color: isSelected ? color : Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(status, style: TextStyle(color: isSelected ? color : Colors.grey, fontWeight: FontWeight.bold)),
       ),
     );
   }
