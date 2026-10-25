@@ -18,7 +18,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
     return await openDatabase(
       path,
-      version: 5, // Version 5 kar diya (Staff ke liye)
+      version: 6, // Version 6 kar diya (Staff Payments ke liye)
       onCreate: (db, version) async {
         // Purane Tables
         await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
@@ -27,10 +27,11 @@ class DatabaseHelper {
         await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT, theme TEXT, gst TEXT, businessType TEXT)');
         await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
         await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
-        
-        // Naye Tables (Staff ke liye)
         await db.execute('CREATE TABLE staff(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, dailyWage REAL)');
         await db.execute('CREATE TABLE attendance(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, date TEXT, status TEXT, paymentStatus TEXT)');
+        
+        // Nayi Table (Staff Payments)
+        await db.execute('CREATE TABLE staff_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, amount REAL, note TEXT, date TEXT)');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -47,6 +48,9 @@ class DatabaseHelper {
         if (oldVersion < 5) {
           await db.execute('CREATE TABLE staff(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, dailyWage REAL)');
           await db.execute('CREATE TABLE attendance(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, date TEXT, status TEXT, paymentStatus TEXT)');
+        }
+        if (oldVersion < 6) {
+          await db.execute('CREATE TABLE staff_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, amount REAL, note TEXT, date TEXT)');
         }
       }
     );
@@ -193,5 +197,24 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getTodayAttendance(String todayDate) async {
     Database db = await database;
     return await db.query('attendance', where: 'date = ?', whereArgs: [todayDate]);
+  }
+
+  // ================= STAFF PAYMENT FUNCTIONS =================
+
+  Future<int> insertStaffPayment(Map<String, dynamic> row) async {
+    Database db = await database;
+    return await db.insert('staff_payments', row);
+  }
+
+  Future<List<Map<String, dynamic>>> getStaffPayments(int staffId) async {
+    Database db = await database;
+    return await db.query('staff_payments', where: 'staffId = ?', whereArgs: [staffId], orderBy: 'id DESC');
+  }
+
+  Future<int> deleteStaff(int staffId) async {
+    Database db = await database;
+    await db.delete('attendance', where: 'staffId = ?', whereArgs: [staffId]);
+    await db.delete('staff_payments', where: 'staffId = ?', whereArgs: [staffId]);
+    return await db.delete('staff', where: 'id = ?', whereArgs: [staffId]);
   }
 }
