@@ -70,16 +70,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         backgroundColor: Colors.indigo[900], // Dark blue
         foregroundColor: Colors.white,
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () async {
-                // Settings sidebar kholo
-                final result = await Scaffold.of(context).openDrawer();
-              },
-            ),
-          )
-        ],
+  Builder(
+    builder: (context) => IconButton(
+      icon: const Icon(Icons.settings),
+      onPressed: () {
+        // Sirf drawer kholo, await hata do
+        Scaffold.of(context).openDrawer();
+      },
+    ),
+  )
+],
       ),
       // Ye Drawer ko sidebar ke liye call karta hai
       drawer: SettingsScreen(),
