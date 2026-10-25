@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
+import 'bill_preview_screen.dart'; // Ye import zaroori hai
 
 class AddBillScreen extends StatefulWidget {
   const AddBillScreen({super.key});
@@ -82,8 +83,8 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
     String date = DateTime.now().toString().substring(0, 10);
 
-    // Naya function call ho raha hai
-    await DatabaseHelper().saveFullBill(
+    // Yahan 'await' lagana zaroori tha
+    int billId = await DatabaseHelper().saveFullBill(
       {
         'customerName': _customerController.text,
         'customerMobile': _mobileController.text,
@@ -94,7 +95,11 @@ class _AddBillScreenState extends State<AddBillScreen> {
       _billItems,
     );
 
-    Navigator.pop(context); 
+    // Save hone ke baad direct Preview screen par bhej do
+    Navigator.pushReplacement(
+      context, 
+      MaterialPageRoute(builder: (context) => BillPreviewScreen(billId: billId))
+    );
   }
 
   @override
