@@ -214,67 +214,94 @@ class _StaffScreenState extends State<StaffScreen> {
   }
 
   // Dialog: Haazri Lagana
-  void _showAddAttendanceDialog() {
-    String? selectedStaffId;
-    String selectedStatus = "Present";
-    String selectedPayment = "Baki (Khata)";
+void _showAddAttendanceDialog() {
+  String? selectedStaffId;
+  String selectedStatus = "Present";
+  String selectedPayment = "Baki (Khata)";
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.calendar_today, color: Colors.indigo),
-                SizedBox(width: 8),
-                Text("Haazri Lagayein"),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  readOnly: true,
-                  controller: TextEditingController(text: DateTime.now().toString().substring(0, 10)),
-                  decoration: const InputDecoration(labelText: "Tariq (Date)", border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: "Staff Chunein", border: OutlineInputBorder()),
-                  items: _staffList.map((s) => DropdownMenuItem<String>(value: s['id'].toString(), child: Text(s['name']))).toList(),
-                  onChanged: (val) => setState(() => selectedStaffId = val),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: "Status", border: OutlineInputBorder()),
-                        value: selectedStatus,
-                        items: const [
-                          DropdownMenuItem(value: "Present", child: Text("✅ Present")),
-                          DropdownMenuItem(value: "Absent", child: Text("❌ Absent")),
-                        ],
-                        onChanged: (val) => setState(() => selectedStatus = val!),
-                      ),
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.calendar_today, color: Colors.indigo),
+              SizedBox(width: 8),
+              Text("Haazri Lagayein"),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                readOnly: true,
+                controller: TextEditingController(text: DateTime.now().toString().substring(0, 10)),
+                decoration: const InputDecoration(labelText: "Tariq (Date)", border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                isExpanded: true, // <-- Ye add kiya (Overflow fix)
+                decoration: const InputDecoration(labelText: "Staff Chunein", border: OutlineInputBorder()),
+                items: _staffList.map((s) => DropdownMenuItem<String>(value: s['id'].toString(), child: Text(s['name']))).toList(),
+                onChanged: (val) => setState(() => selectedStaffId = val),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true, // <-- Ye add kiya (Overflow fix)
+                      decoration: const InputDecoration(labelText: "Status", border: OutlineInputBorder()),
+                      value: selectedStatus,
+                      items: const [
+                        DropdownMenuItem(value: "Present", child: Text("✅ Present", overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: "Absent", child: Text("❌ Absent", overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) => setState(() => selectedStatus = val!),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: "Payment", border: OutlineInputBorder()),
-                        value: selectedPayment,
-                        items: const [
-                          DropdownMenuItem(value: "Baki (Khata)", child: Text("📝 Baki (Khata)")),
-                          DropdownMenuItem(value: "Paid", child: Text("💵 Paid")),
-                        ],
-                        onChanged: (val) => setState(() => selectedPayment = val!),
-                      ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true, // <-- Ye add kiya (Overflow fix)
+                      decoration: const InputDecoration(labelText: "Payment", border: OutlineInputBorder()),
+                      value: selectedPayment,
+                      items: const [
+                        DropdownMenuItem(value: "Baki (Khata)", child: Text("📝 Baki", overflow: TextOverflow.ellipsis)),
+                        DropdownMenuItem(value: "Paid", child: Text("💵 Paid", overflow: TextOverflow.ellipsis)),
+                      ],
+                      onChanged: (val) => setState(() => selectedPayment = val!),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () async {
+                if (selectedStaffId != null) {
+                  await DatabaseHelper().insertAttendance({
+                    'staffId': int.parse(selectedStaffId!),
+                    'date': DateTime.now().toString().substring(0, 10),
+                    'status': selectedStatus,
+                    'paymentStatus': selectedPayment,
+                  });
+                  Navigator.pop(context);
+                  _loadData();
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900]),
+              child: const Text("Save Haazri", style: TextStyle(color: Colors.white)),
+            )
+          ],
+        );
+      },
+    ),
+  );
+}
             actions: [
               TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
               ElevatedButton(
