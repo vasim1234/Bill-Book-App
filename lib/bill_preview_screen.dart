@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart'; // QR ke liye
+import 'package:url_launcher/url_launcher.dart'; // WhatsApp ke liye
 import 'database_helper.dart';
 
 class BillPreviewScreen extends StatefulWidget {
@@ -33,6 +35,33 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     });
   }
 
+  // WhatsApp par bill bhejne ka function
+  void _sendWhatsAppBill() async {
+    String mobile = _billData!['customerMobile'] ?? "";
+    if (mobile.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka mobile number nahi hai!')));
+      return;
+    }
+
+    // Number format theek karo (91 add karo agar nahi hai)
+    if (!mobile.startsWith('91')) mobile = '91$mobile';
+
+    String businessName = _settings?['businessName'] ?? "My Dukan";
+    String total = _billData!['totalAmount'].toString();
+    String date = _billData!['date'];
+
+    // WhatsApp message text
+    String text = "Namaste ${_billData!['customerName']},\n\n"
+        "Aapka bill details:\n"
+        "Business: $businessName\n"
+        "Date: $date\n"
+        "Total Amount: ₹$total\n\n"
+        "Thank you for shopping with us!";
+
+    String url = "https://wa.me/$mobile?text=${Uri.encodeComponent(text)}";
+    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_billData == null) {
@@ -52,7 +81,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Theme ke hisaab se bill design render karo
             if (theme == "Modern Boxed") _buildModernBoxed(),
             if (theme == "Classic Minimal") _buildClassicMinimal(),
             if (theme == "Dark Header") _buildDarkHeader(),
@@ -64,18 +92,19 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bluetooth Print feature coming next!'))); },
+                onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thermal Printer connected soon!'))); },
                 icon: const Icon(Icons.print),
                 label: const Text("Thermal Printer / Bluetooth Print"),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
               ),
             ),
             const SizedBox(height: 10),
+            
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF feature coming next!'))); },
+                    onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF feature coming soon!'))); },
                     icon: const Icon(Icons.picture_as_pdf),
                     label: const Text("Save PDF"),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400], foregroundColor: Colors.black),
@@ -84,7 +113,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp feature coming next!'))); },
+                    onPressed: _sendWhatsAppBill, // WhatsApp logic call kiya
                     icon: const Icon(Icons.message),
                     label: const Text("WhatsApp Bill"),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
@@ -93,6 +122,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
             const SizedBox(height: 10),
+            
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -108,7 +138,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // ==========================================
-  // 1. MODERN BOXED THEME (Blue Header)
+  // 1. MODERN BOXED THEME
   // ==========================================
   Widget _buildModernBoxed() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
@@ -147,7 +177,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
             const Divider(),
             _buildGrandTotal(),
             const SizedBox(height: 20),
-            _buildFooter(businessName),
+            _buildQrAndFooter(businessName),
           ],
         ),
       ),
@@ -179,7 +209,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
             _buildGrandTotal(),
             const SizedBox(height: 20),
             const Divider(),
-            _buildFooter(businessName),
+            _buildQrAndFooter(businessName),
           ],
         ),
       ),
@@ -196,7 +226,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // Dark Header
           Container(
             padding: const EdgeInsets.all(16.0),
             color: const Color(0xFF1E293B),
@@ -208,7 +237,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
           ),
-          // Body
           Container(
             padding: const EdgeInsets.all(16.0),
             color: Colors.white,
@@ -221,7 +249,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 const Divider(),
                 _buildGrandTotal(),
                 const SizedBox(height: 20),
-                _buildFooter(businessName),
+                _buildQrAndFooter(businessName),
               ],
             ),
           ),
@@ -303,14 +331,29 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     );
   }
 
-  Widget _buildFooter(String businessName) {
+  // QR Code aur Footer
+  Widget _buildQrAndFooter(String businessName) {
     String upiId = _settings?['upiId'] ?? "";
+    String totalAmount = _billData!['totalAmount'].toString();
+    
+    // UPI Link format: upi://pay?pa=upi_id&pn=Business_Name&am=Amount&cu=INR
+    String upiLink = "upi://pay?pa=$upiId&pn=$businessName&am=$totalAmount&cu=INR";
+
     return Center(
       child: Column(
         children: [
-          if (upiId.isNotEmpty)
-            Text("Scan to Pay: $upiId", style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
+          if (upiId.isNotEmpty) ...[
+            const Text("SCAN TO PAY", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            const SizedBox(height: 5),
+            // QR Code Widget
+            QrImageView(
+              data: upiLink,
+              version: QrVersions.auto,
+              size: 120.0,
+            ),
+            Text(upiId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            const SizedBox(height: 10),
+          ],
           Text("Thank you for shopping with $businessName!", style: const TextStyle(fontSize: 12, color: Colors.grey)),
         ],
       ),
