@@ -14,14 +14,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _mobileController = TextEditingController();
   final _addressController = TextEditingController();
   final _upiController = TextEditingController();
+  final _gstController = TextEditingController();
   
-  String _selectedTheme = "Modern Boxed"; // Default Theme
+  String _selectedTheme = "Modern Boxed";
+  String _selectedType = "Wholesaler";
 
-  final List<String> _themes = [
-    "Modern Boxed",
-    "Classic Minimal",
-    "Dark Header"
-  ];
+  final List<String> _themes = ["Modern Boxed", "Classic Minimal", "Dark Header"];
+  final List<String> _types = ["Wholesaler", "Retailer", "Distributor", "Manufacturer"];
 
   @override
   void initState() {
@@ -38,7 +37,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _mobileController.text = data['mobile'] ?? "";
         _addressController.text = data['address'] ?? "";
         _upiController.text = data['upiId'] ?? "";
-        _selectedTheme = data['theme'] ?? "Modern Boxed"; // Purana theme load karo
+        _gstController.text = data['gst'] ?? "";
+        _selectedTheme = data['theme'] ?? "Modern Boxed";
+        _selectedType = data['businessType'] ?? "Wholesaler";
       });
     }
   }
@@ -50,9 +51,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'mobile': _mobileController.text,
       'address': _addressController.text,
       'upiId': _upiController.text,
-      'theme': _selectedTheme, // Theme save karo
+      'gst': _gstController.text,
+      'theme': _selectedTheme,
+      'businessType': _selectedType,
     });
     Navigator.pop(context, true);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings Saved!')));
   }
 
   @override
@@ -61,9 +65,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.indigo),
-            child: Column(
+          // Header
+          DrawerHeader(
+            decoration: BoxDecoration(color: Colors.indigo[900]),
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -73,47 +78,159 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+          
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                TextField(controller: _businessController, decoration: const InputDecoration(labelText: "Business Name")),
-                const SizedBox(height: 10),
-                TextField(controller: _ownerController, decoration: const InputDecoration(labelText: "Owner Name")),
-                const SizedBox(height: 10),
-                TextField(controller: _mobileController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: "Mobile No")),
-                const SizedBox(height: 10),
-                TextField(controller: _addressController, decoration: const InputDecoration(labelText: "Address")),
-                const SizedBox(height: 10),
-                TextField(controller: _upiController, decoration: const InputDecoration(labelText: "UPI ID (For QR)")),
-                const SizedBox(height: 20),
-                
-                // --- NAYA DROPDOWN (Bill Theme) ---
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: "Invoice Theme", border: OutlineInputBorder()),
-                  value: _selectedTheme,
-                  items: _themes.map((theme) {
-                    return DropdownMenuItem(value: theme, child: Text(theme));
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() { _selectedTheme = value!; });
-                  },
+                // --- APP SHARE BUTTON (PWA Style) ---
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green[400],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.share, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text("App Share Karein (Link)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 20),
 
+                // --- BILL SETTINGS ---
+                _buildSectionTitle("Bill Layout & Theme"),
+                const SizedBox(height: 10),
+                
+                // Bill Layout (Dummy buttons for UI)
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.phone_android, size: 18),
+                        label: const Text("Mobile"),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.description, size: 18),
+                        label: const Text("A4 Wide"),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300], foregroundColor: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Invoice Theme Dropdown
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: "Invoice Theme", border: OutlineInputBorder()),
+                  value: _selectedTheme,
+                  items: _themes.map((theme) => DropdownMenuItem(value: theme, child: Text(theme))).toList(),
+                  onChanged: (value) => setState(() => _selectedTheme = value!),
+                ),
+                const SizedBox(height: 20),
+
+                // --- UPI & QR SETTINGS ---
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue[200]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.qr_code, color: Colors.blue, size: 20),
+                          SizedBox(width: 8),
+                          Text("UPI ID (Payment QR ke liye)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _upiController,
+                        decoration: const InputDecoration(
+                          hintText: "e.g., 9904178658@ybl",
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // --- BUSINESS DETAILS ---
+                _buildSectionTitle("Business Details"),
+                const SizedBox(height: 10),
+                
+                TextField(controller: _businessController, decoration: const InputDecoration(labelText: "Business Name *", border: OutlineInputBorder())),
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(labelText: "Type", border: OutlineInputBorder()),
+                        value: _selectedType,
+                        items: _types.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+                        onChanged: (value) => setState(() => _selectedType = value!),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: TextField(controller: _ownerController, decoration: const InputDecoration(labelText: "Aapka Naam", border: OutlineInputBorder()))),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(child: TextField(controller: _mobileController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: "Mobile No.", border: OutlineInputBorder()))),
+                    const SizedBox(width: 10),
+                    Expanded(child: TextField(controller: _gstController, decoration: const InputDecoration(labelText: "GST No.", border: OutlineInputBorder()))),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                TextField(controller: _addressController, decoration: const InputDecoration(labelText: "Address", border: OutlineInputBorder())),
+                
+                const SizedBox(height: 20),
+
+                // --- SAVE BUTTON ---
                 SizedBox(
                   width: double.infinity,
+                  height: 50,
                   child: ElevatedButton(
                     onPressed: _saveData,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
-                    child: const Text("Save Settings", style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+                    child: const Text("Save Settings", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                )
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo)),
     );
   }
 }
