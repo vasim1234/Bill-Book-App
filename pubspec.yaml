@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   sqflite: ^2.3.0
   path: ^1.8.3
+  url_launcher: ^6.2.2   # <--- Ye line yahan add karni hai
 
 dev_dependencies:
   flutter_test:
