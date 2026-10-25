@@ -41,53 +41,44 @@ class DatabaseHelper {
 
   // ================= CASH / KHATA FUNCTIONS =================
 
-  // Naya customer add karna
   Future<int> insertCustomer(Map<String, dynamic> row) async {
     Database db = await database;
     return await db.insert('customers', row);
   }
 
-  // Saare customers ki list (Search ke liye)
   Future<List<Map<String, dynamic>>> getAllCustomers() async {
     Database db = await database;
     return await db.query('customers', orderBy: 'name ASC');
   }
 
-  // Naya Lena-Dena (Transaction) add karna
   Future<int> insertTransaction(Map<String, dynamic> row) async {
     Database db = await database;
     return await db.insert('transactions', row);
   }
 
-  // Kisi ek customer ki puri history lana
   Future<List<Map<String, dynamic>>> getCustomerTransactions(int customerId) async {
     Database db = await database;
     return await db.query('transactions', where: 'customerId = ?', whereArgs: [customerId], orderBy: 'id DESC');
   }
 
-  // Sabka total hisaab nikalna (Kitna lena hai, kitna dena hai)
   Future<Map<String, double>> getTotalCashSummary() async {
     Database db = await database;
     List<Map<String, dynamic>> transactions = await db.query('transactions');
     
-    double totalLena = 0.0; // RED (You will get)
-    double totalDena = 0.0; // GREEN (You will give)
+    double totalLena = 0.0; 
+    double totalDena = 0.0; 
 
     for (var t in transactions) {
       double amount = (t['amount'] as num).toDouble();
       if (t['type'] == 'LIYA') {
-        totalLena += amount; // Agar humne liya hai, toh wo humein dena hai
+        totalLena += amount; 
       } else if (t['type'] == 'DIYA') {
-        totalDena += amount; // Agar humne diya hai, toh humein lena hai
+        totalDena += amount; 
       }
     }
-    // Note: Business logic mein 'LIYA' matlab humara udhaar hai.
-    // Lekin PWA mein: "Aapko lene hain" (Red) = Customer ne humse liya.
-    
     return {'lena': totalLena, 'dena': totalDena};
   }
 
-  // Kisi customer ka total balance nikalna
   Future<double> getCustomerBalance(int customerId) async {
     Database db = await database;
     List<Map<String, dynamic>> transactions = await db.query('transactions', where: 'customerId = ?', whereArgs: [customerId]);
@@ -95,19 +86,55 @@ class DatabaseHelper {
     double balance = 0.0;
     for (var t in transactions) {
       double amount = (t['amount'] as num).toDouble();
-      if (t['type'] == 'LIYA') balance += amount; // Customer ne liya (Lena hai)
-      if (t['type'] == 'DIYA') balance -= amount; // Humne diya (Dena hai)
+      if (t['type'] == 'LIYA') balance += amount; 
+      if (t['type'] == 'DIYA') balance -= amount; 
     }
     return balance;
   }
 
-  // Purane Functions (Bills, Stock, Settings)...
+  // ================= STOCK & BILL FUNCTIONS =================
+
   Future<int> insertItem(Map<String, dynamic> row) async { Database db = await database; return await db.insert('items', row); }
+  
   Future<List<Map<String, dynamic>>> getAllItems() async { Database db = await database; return await db.query('items', orderBy: 'id DESC'); }
+  
   Future<int> updateItemStock(int id, int newStock) async { Database db = await database; return await db.update('items', {'stock': newStock}, where: 'id = ?', whereArgs: [id]); }
+  
   Future<int> deleteItem(int id) async { Database db = await database; return await db.delete('items', where: 'id = ?', whereArgs: [id]); }
+
+  // --- YAHAN WO DO MISSING FUNCTIONS ADD KIYE HAIN ---
+  
+  // 1. Item ko Edit karne ke liye
+  Future<int> updateItem(int id, String name, double price, int stock) async {
+    Database db = await database;
+    return await db.update(
+      'items', 
+      {'itemName': name, 'price': price, 'stock': stock}, 
+      where: 'id = ?', 
+      whereArgs: [id]
+    );
+  }
+
+  // 2. Is mahine ki Total Sale nikalne ke liye
+  Future<double> getThisMonthSale() async {
+    Database db = await database;
+    String currentMonth = DateTime.now().toString().substring(0, 7); 
+    List<Map<String, dynamic>> result = await db.rawQuery(
+      "SELECT SUM(totalAmount) as total FROM bills WHERE date LIKE ?", 
+      ['$currentMonth%']
+    );
+    if (result.isNotEmpty && result.first['total'] != null) {
+      return (result.first['total'] as num).toDouble();
+    }
+    return 0.0;
+  }
+
+  // ---------------------------------------------------
+
   Future<Map<String, dynamic>?> getSettings() async { Database db = await database; List<Map<String, dynamic>> result = await db.query('settings', where: 'id = ?', whereArgs: [1]); if (result.isNotEmpty) return result.first; return null; }
+  
   Future<int> saveSettings(Map<String, dynamic> row) async { Database db = await database; row['id'] = 1; return await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace); }
+  
   Future<int> saveFullBill(Map<String, dynamic> billData, List<Map<String, dynamic>> billItems) async {
     Database db = await database;
     int billId = await db.insert('bills', billData);
@@ -124,7 +151,10 @@ class DatabaseHelper {
     }
     return billId;
   }
+  
   Future<List<Map<String, dynamic>>> getAllBills() async { Database db = await database; return await db.query('bills', orderBy: 'id DESC'); }
+  
   Future<int> deleteBill(int id) async { Database db = await database; await db.delete('bill_items', where: 'billId = ?', whereArgs: [id]); return await db.delete('bills', where: 'id = ?', whereArgs: [id]); }
+  
   Future<List<Map<String, dynamic>>> getBillItems(int billId) async { Database db = await database; return await db.query('bill_items', where: 'billId = ?', whereArgs: [billId]); }
 }
