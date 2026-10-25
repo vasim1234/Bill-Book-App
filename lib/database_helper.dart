@@ -15,28 +15,31 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
-    return await openDatabase(
-      path,
-      version: 2, // Version badha diya kyunki naye tables add ho rahe hain
-      onCreate: (db, version) async {
-        // Purane tables
-        await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
-        await db.execute('CREATE TABLE bill_items(id INTEGER PRIMARY KEY AUTOINCREMENT, billId INTEGER, itemName TEXT, quantity INTEGER, price REAL)');
-        await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
-        await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT)');
-        
-        // Naye Tables (Cash/Khata ke liye)
+  String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
+  return await openDatabase(
+    path,
+    version: 3, // Version 3 kar diya (theme column ke liye)
+    onCreate: (db, version) async {
+      await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
+      await db.execute('CREATE TABLE bill_items(id INTEGER PRIMARY KEY AUTOINCREMENT, billId INTEGER, itemName TEXT, quantity INTEGER, price REAL)');
+      await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
+      // Settings table mein 'theme' column add kiya
+      await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT, theme TEXT)');
+      
+      await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
+      await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
+    },
+    onUpgrade: (db, oldVersion, newVersion) async {
+      if (oldVersion < 2) {
         await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
         await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
-          await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
-        }
       }
-    );
+      if (oldVersion < 3) {
+        // Purani settings table mein 'theme' column add kar rahe hain
+        await db.execute('ALTER TABLE settings ADD COLUMN theme TEXT');
+      }
+    }
+  );
   }
 
   // ================= CASH / KHATA FUNCTIONS =================
