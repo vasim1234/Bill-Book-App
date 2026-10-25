@@ -55,20 +55,15 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     if (_billData == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Center(child: CircularProgressIndicator());
     }
 
-    // Default theme agar settings mein set nahi hai
     String theme = _settings?['theme'] ?? "Modern Boxed"; 
 
-    return Scaffold(
-      backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        title: const Text("Invoice Preview"),
-        backgroundColor: Colors.indigo[900],
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
+    // Humne yahan Scaffold ka apna AppBar hata diya hai
+    return Container(
+      color: Colors.grey[200],
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
@@ -118,7 +113,9 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               width: double.infinity,
               height: 50,
               child: OutlinedButton(
-                onPressed: () { Navigator.pop(context); },
+                onPressed: () { 
+                  Navigator.pop(context); // Wapas main screen par jao
+                },
                 child: const Text("New Sale", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
@@ -130,12 +127,11 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // ==========================================
-  // 1. MODERN BOXED THEME (Blue Header)
+  // 1. MODERN BOXED THEME
   // ==========================================
   Widget _buildModernBoxed() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
     String ownerName = _settings?['ownerName'] ?? "Owner";
-    String mobile = _settings?['mobile'] ?? "";
     String address = _settings?['address'] ?? "";
     String upiId = _settings?['upiId'] ?? "";
 
@@ -152,7 +148,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -176,8 +171,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
             const SizedBox(height: 15),
             Container(height: 2, color: Colors.indigo),
             const SizedBox(height: 15),
-
-            // Customer & Store Details
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,8 +201,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
             const SizedBox(height: 20),
-
-            // Table Header
             Container(
               color: Colors.indigo[50],
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
@@ -222,8 +213,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 ],
               ),
             ),
-
-            // Table Items
             ..._billItems.map((item) {
               double amount = item['price'] * item['quantity'];
               return Container(
@@ -239,10 +228,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 ),
               );
             }),
-
             const SizedBox(height: 15),
-
-            // Total
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -264,7 +250,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // ==========================================
-  // 2. CLASSIC MINIMAL THEME (White)
+  // 2. CLASSIC MINIMAL THEME
   // ==========================================
   Widget _buildClassicMinimal() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
@@ -293,7 +279,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 15),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -316,8 +301,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
             const SizedBox(height: 20),
-
-            // Table Header
             const Row(
               children: [
                 Expanded(flex: 4, child: Text("ITEM", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
@@ -327,7 +310,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
             const Divider(),
-            
             ..._billItems.map((item) {
               double amount = item['price'] * item['quantity'];
               return Padding(
@@ -342,17 +324,14 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 ),
               );
             }),
-            
             const Divider(),
             const SizedBox(height: 10),
-            
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text("TOTAL: ₹${_billData!['totalAmount']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
               ],
             ),
-            
             const SizedBox(height: 20),
             _buildQrAndFooter(businessName, upiId),
           ],
@@ -375,10 +354,9 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          // Dark Header
           Container(
             padding: const EdgeInsets.all(20.0),
-            color: const Color(0xFF1E293B), // Dark Slate
+            color: const Color(0xFF1E293B), 
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -398,7 +376,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
           ),
-          // Body
           Container(
             padding: const EdgeInsets.all(16.0),
             color: Colors.white,
@@ -426,8 +403,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
-                // Table
                 Container(
                   color: Colors.grey[100],
                   padding: const EdgeInsets.all(8),
@@ -439,7 +414,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                     ],
                   ),
                 ),
-                
                 ..._billItems.map((item) {
                   double amount = item['price'] * item['quantity'];
                   return Padding(
@@ -453,7 +427,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                     ),
                   );
                 }),
-                
                 const Divider(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
