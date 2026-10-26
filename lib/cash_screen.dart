@@ -22,15 +22,28 @@ class _CashScreenState extends State<CashScreen> {
     _loadData();
   }
 
+  // --- Fixed & Accurate Total Summary Calculation ---
   void _loadData() async {
     final customers = await DatabaseHelper().getAllCustomers();
-    final summary = await DatabaseHelper().getTotalCashSummary();
+    
+    double tempLena = 0.0;
+    double tempDena = 0.0;
+
+    // Har customer ka balance nikal kar Lene aur Dene ka total calculate karo
+    for (var customer in customers) {
+      double bal = await DatabaseHelper().getCustomerBalance(customer['id']);
+      if (bal > 0) {
+        tempLena += bal; // Jo hume lene hain (Positive balance)
+      } else if (bal < 0) {
+        tempDena += bal.abs(); // Jo hume dene hain (Negative balance ko positive karke jodein)
+      }
+    }
 
     setState(() {
       _customers = customers;
       _filteredCustomers = customers;
-      _totalLena = summary['lena'] ?? 0.0;
-      _totalDena = summary['dena'] ?? 0.0;
+      _totalLena = tempLena;
+      _totalDena = tempDena;
     });
   }
 
@@ -67,18 +80,18 @@ class _CashScreenState extends State<CashScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Lena hai (Red)
+                    // Lena hai
                     Column(
                       children: [
                         const Text("AAPKO LENE HAIN", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        Text("₹ ${_totalLena.toStringAsFixed(0)}", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                        Text("₹ ${_totalLena.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    // Dena hai (White)
+                    // Dena hai
                     Column(
                       children: [
                         const Text("AAPKO DENE HAIN", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        Text("₹ ${_totalDena.toStringAsFixed(0)}", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                        Text("₹ ${_totalDena.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],
@@ -180,7 +193,6 @@ class _CashScreenState extends State<CashScreen> {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
-        // StatefulBuilder use kiya taaki popup ke andar color change ho sake
         return StatefulBuilder(
           builder: (context, setState) {
             return Padding(
@@ -216,10 +228,10 @@ class _CashScreenState extends State<CashScreen> {
                               border: Border.all(color: transactionType == "DIYA" ? Colors.red : Colors.grey),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Column(
+                            child: const Column(
                               children: [
-                                Text("🔴 Diya", style: TextStyle(fontWeight: FontWeight.bold, color: transactionType == "DIYA" ? Colors.red : Colors.grey)),
-                                Text("UDHAAR LENE HAIN", style: TextStyle(fontSize: 10, color: transactionType == "DIYA" ? Colors.red : Colors.grey)),
+                                Text("🔴 Diya", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                                Text("UDHAAR LENE HAIN", style: TextStyle(fontSize: 10, color: Colors.red)),
                               ],
                             ),
                           ),
@@ -236,10 +248,10 @@ class _CashScreenState extends State<CashScreen> {
                               border: Border.all(color: transactionType == "LIYA" ? Colors.green : Colors.grey),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Column(
+                            child: const Column(
                               children: [
-                                Text("🟢 Liya", style: TextStyle(fontWeight: FontWeight.bold, color: transactionType == "LIYA" ? Colors.green : Colors.grey)),
-                                Text("ADVANCE DENE HAIN", style: TextStyle(fontSize: 10, color: transactionType == "LIYA" ? Colors.green : Colors.grey)),
+                                Text("🟢 Liya", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                                Text("ADVANCE DENE HAIN", style: TextStyle(fontSize: 10, color: Colors.green)),
                               ],
                             ),
                           ),
@@ -255,7 +267,6 @@ class _CashScreenState extends State<CashScreen> {
                     child: ElevatedButton(
                       onPressed: () async {
                         if (nameController.text.isNotEmpty && amountController.text.isNotEmpty) {
-                          // 1. Customer check karo, nahi toh naya banao
                           int customerId;
                           final existing = await DatabaseHelper().getAllCustomers();
                           var found = existing.where((c) => c['name'].toString().toLowerCase() == nameController.text.toLowerCase()).toList();
@@ -269,7 +280,6 @@ class _CashScreenState extends State<CashScreen> {
                             });
                           }
 
-                          // 2. Transaction save karo
                           await DatabaseHelper().insertTransaction({
                             'customerId': customerId,
                             'amount': double.parse(amountController.text),
