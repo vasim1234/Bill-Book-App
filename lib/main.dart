@@ -125,22 +125,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       
       // Agar Bill Preview chal raha hai, toh FAB (Cart button) hide kar do
       floatingActionButton: _previewBillId != null ? null : FloatingActionButton(
-        onPressed: () async {
-          // Bill Screen par jao, aur wapas aane par billId lo
-          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
-          
-          // Agar bill save hua hai aur result mein ID aayi hai
-          if (result != null && result is int) {
-             setState(() {
-               _previewBillId = result; // Bill Preview on kar do
-             });
-          } else {
-             setState(() { _currentIndex = 0; }); 
-          }
-        },
-        backgroundColor: Colors.indigo,
-        child: const Icon(Icons.shopping_cart, color: Colors.white),
-      ),
+  onPressed: () async {
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
+    if (result != null && result is int) {
+       setState(() {
+         _previewBillId = result; 
+       });
+    } else {
+       setState(() { _currentIndex = 0; }); 
+    }
+  },
+  backgroundColor: Colors.indigo,
+  child: const Icon(Icons.shopping_cart, color: Colors.white),
+),
+// Yahan 'centerDocked' ki jagah 'center' kar do
+floatingActionButtonLocation: FloatingActionButtonLocation.center,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
