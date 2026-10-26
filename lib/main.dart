@@ -6,7 +6,7 @@ import 'settings_screen.dart';
 import 'cash_screen.dart'; 
 import 'bill_preview_screen.dart';
 import 'staff_screen.dart';
-import 'auth_screen.dart'; // Naya import
+import 'auth_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +24,6 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.indigo, 
         scaffoldBackgroundColor: Colors.grey[100]
       ),
-      // Yahan AuthScreen laga diya hai (Login/Signup)
       home: const AuthScreen(), 
     );
   }
@@ -40,18 +39,15 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   String _businessName = "My Dukan"; 
-  
-  // Bill Preview ko dikhane ke liye variable
   int? _previewBillId; 
 
-  // Asli screens (Yahan StaffScreen add kar diya)
   final List<Widget> _screens = [
-  const CashScreen(),       
-  const StockScreen(),      
-  const Center(child: Text("Quick Add (Coming Soon)")),  
-  const Center(child: Text("Add Bill Screen (Coming Soon)")), // Add button ke liye jagah
-  const StaffScreen(), 
-];
+    const CashScreen(),       
+    const StockScreen(),      
+    const Center(child: Text("Quick Add (Coming Soon)")),  
+    const Center(child: Text("Add Bill Screen (Coming Soon)")), 
+    const StaffScreen(), 
+  ];
 
   @override
   void initState() {
@@ -70,11 +66,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Agar previewBillId set hai, matlab humein bill dikhana hai
-    // Warna normal screens dikhao
     Widget bodyWidget = _previewBillId != null 
-        ? BillPreviewScreen(billId: _previewBillId!) // Bill Preview Screen
-        : _screens[_currentIndex];                   // Normal Screen
+        ? BillPreviewScreen(billId: _previewBillId!) 
+        : _screens[_currentIndex];                   
 
     return Scaffold(
       appBar: AppBar(
@@ -100,7 +94,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
       drawer: const SettingsScreen(),
       
-      // Yahan hum check kar rahe hain ki Bill Preview dikhana hai ya normal screen
       body: bodyWidget,
       
       bottomNavigationBar: BottomNavigationBar(
@@ -109,7 +102,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onTap: (index) {
           setState(() {
             _currentIndex = index;
-            _previewBillId = null; // Agar user menu dabaye, toh bill preview band ho jaye
+            _previewBillId = null; 
           });
         },
         selectedItemColor: Colors.indigo,
@@ -123,24 +116,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       
-      // Agar Bill Preview chal raha hai, toh FAB (Cart button) hide kar do
       floatingActionButton: _previewBillId != null ? null : FloatingActionButton(
-  onPressed: () async {
-    final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
-    if (result != null && result is int) {
-       setState(() {
-         _previewBillId = result; 
-       });
-    } else {
-       setState(() { _currentIndex = 0; }); 
-    }
-  },
-  backgroundColor: Colors.indigo,
-  child: const Icon(Icons.shopping_cart, color: Colors.white),
-),
-// Yahan 'centerDocked' ki jagah 'center' kar do
-floatingActionButtonLocation: FloatingActionButtonLocation.center,
-     floatingActionButtonLocation: FloatingActionButtonLocation.center,
+        onPressed: () async {
+          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
+          if (result != null && result is int) {
+             setState(() {
+               _previewBillId = result; 
+             });
+          } else {
+             setState(() { _currentIndex = 0; }); 
+          }
+        },
+        backgroundColor: Colors.indigo,
+        child: const Icon(Icons.shopping_cart, color: Colors.white),
+      ),
+      
+      // Yahan bilkul sahi syntax hai
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
