@@ -140,7 +140,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 ),
 // Yahan 'centerDocked' ki jagah 'center' kar do
 floatingActionButtonLocation: FloatingActionButtonLocation.center,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+     floatingActionButtonLocation: FloatingActionButtonLocation.center,
     );
   }
 }
