@@ -164,23 +164,33 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       body: Column(
         children: [
           // Balance Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            color: Colors.indigo[50],
-            child: Column(
-              children: [
-                Text(
-                  _balance > 0 ? "AAPKO LENE HAIN" : (_balance < 0 ? "AAPKO DENE HAIN" : "HISAAB CLEAR"),
-                  style: TextStyle(fontWeight: FontWeight.bold, color: _balance > 0 ? Colors.red : Colors.green),
-                ),
-                Text(
-                  "₹ ${_balance.abs().toStringAsFixed(2)}",
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: _balance > 0 ? Colors.red : Colors.green),
-                ),
-              ],
-            ),
-          ),
+Container(
+  width: double.infinity,
+  padding: const EdgeInsets.all(20),
+  color: Colors.indigo[50],
+  child: Column(
+    children: [
+      // Agar balance > 0 (Lena hai) toh RED, warna GREEN
+      Text(
+        _balance > 0 
+            ? "AAPKO LENE HAIN" 
+            : (_balance < 0 ? "AAPKO DENE HAIN" : "HISAAB CLEAR"),
+        style: TextStyle(
+          fontWeight: FontWeight.bold, 
+          color: _balance > 0 ? Colors.red : (_balance < 0 ? Colors.green : Colors.grey)
+        ),
+      ),
+      Text(
+        "₹ ${_balance.abs().toStringAsFixed(2)}",
+        style: TextStyle(
+          fontSize: 32, 
+          fontWeight: FontWeight.bold, 
+          color: _balance > 0 ? Colors.red : (_balance < 0 ? Colors.green : Colors.grey)
+        ),
+      ),
+    ],
+  ),
+),
 
           // --- REPORT & REMINDER BUTTONS ---
           Row(
