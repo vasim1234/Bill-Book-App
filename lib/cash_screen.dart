@@ -60,46 +60,45 @@ class _CashScreenState extends State<CashScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // --- Upar ka Summary Card ---
-          Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.green[800],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("💰 Credit / Debit", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Lena hai
-                    Column(
-                      children: [
-                        const Text("AAPKO LENE HAIN", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        Text("₹ ${_totalLena.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    // Dena hai
-                    Column(
-                      children: [
-                        const Text("AAPKO DENE HAIN", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        Text("₹ ${_totalDena.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ],
-                )
-              ],
-            ),
+          // Upar ka Summary Card
+Container(
+  margin: const EdgeInsets.all(12),
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: Colors.green[800],
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: Column(
+    children: [
+      const Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("💰 Credit / Debit", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+        ],
+      ),
+      const SizedBox(height: 15),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Lena hai (Red)
+          Column(
+            children: [
+              const Text("AAPKO LENE HAIN", style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text("₹ ${_totalLena.toStringAsFixed(0)}", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+            ],
           ),
-
+          // Dena hai (White)
+          Column(
+            children: [
+              const Text("AAPKO DENE HAIN", style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text("₹ ${_totalDena.toStringAsFixed(0)}", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ],
+      )
+    ],
+  ),
+),
           // --- Search Bar ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
