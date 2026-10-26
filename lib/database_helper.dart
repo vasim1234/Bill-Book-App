@@ -18,7 +18,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
     return await openDatabase(
       path,
-      version: 7, // Version 7 kar diya (Users/Login ke liye)
+      version: 7, // Version 7 (Users/Login ke liye)
       onCreate: (db, version) async {
         // Purane Tables
         await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
@@ -30,8 +30,6 @@ class DatabaseHelper {
         await db.execute('CREATE TABLE staff(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT, dailyWage REAL)');
         await db.execute('CREATE TABLE attendance(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, date TEXT, status TEXT, paymentStatus TEXT)');
         await db.execute('CREATE TABLE staff_payments(id INTEGER PRIMARY KEY AUTOINCREMENT, staffId INTEGER, amount REAL, note TEXT, date TEXT)');
-        
-        // Nayi Table (Login ke liye)
         await db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -60,7 +58,7 @@ class DatabaseHelper {
     );
   }
 
-  // ================= USER AUTH FUNCTIONS (Naya) =================
+  // ================= USER AUTH FUNCTIONS =================
 
   Future<int> registerUser(String email, String password) async {
     Database db = await database;
@@ -78,7 +76,7 @@ class DatabaseHelper {
     return null;
   }
 
-  // ================= CASH / KHATA FUNCTIONS =================
+  // ================= CASH / KHATA FUNCTIONS (LOGIC FIXED) =================
 
   Future<int> insertCustomer(Map<String, dynamic> row) async {
     Database db = await database;
@@ -109,9 +107,12 @@ class DatabaseHelper {
 
     for (var t in transactions) {
       double amount = (t['amount'] as num).toDouble();
-      if (t['type'] == 'LIYA') {
+      // FIX: Agar humne DIYA hai, toh humein LENA hai
+      if (t['type'] == 'DIYA') {
         totalLena += amount; 
-      } else if (t['type'] == 'DIYA') {
+      } 
+      // FIX: Agar humne LIYA hai, toh humein DENA hai
+      else if (t['type'] == 'LIYA') {
         totalDena += amount; 
       }
     }
@@ -125,8 +126,10 @@ class DatabaseHelper {
     double balance = 0.0;
     for (var t in transactions) {
       double amount = (t['amount'] as num).toDouble();
-      if (t['type'] == 'LIYA') balance += amount; 
-      if (t['type'] == 'DIYA') balance -= amount; 
+      // FIX: DIYA (Udhaar diya) = Customer par baaki = Positive Balance
+      if (t['type'] == 'DIYA') balance += amount; 
+      // FIX: LIYA (Advance liya) = Customer ko dena = Negative Balance
+      if (t['type'] == 'LIYA') balance -= amount; 
     }
     return balance;
   }
