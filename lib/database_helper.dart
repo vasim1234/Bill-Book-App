@@ -286,3 +286,24 @@ class DatabaseHelper {
     };
   }
 }
+  // ================= TRANSACTION EDIT & DELETE FUNCTIONS =================
+
+  Future<int> updateTransaction(Map<String, dynamic> row) async {
+    Database db = await database;
+    int id = row['id'];
+    return await db.update(
+      'transactions', 
+      row, 
+      where: 'id = ?', 
+      whereArgs: [id]
+    );
+  }
+
+  Future<int> deleteTransaction(int id) async {
+    Database db = await database;
+    return await db.delete(
+      'transactions', 
+      where: 'id = ?', 
+      whereArgs: [id]
+    );
+  }
