@@ -61,13 +61,18 @@ class _StaffScreenState extends State<StaffScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFF5F6FA), // PWA jaisa light grey background
       body: Column(
         children: [
-          // Top Header (Dark Blue)
+          // Top Header (PWA Style Floating Card)
           Container(
+            margin: const EdgeInsets.all(16), // Sabse zaroori - bahar se gap
             padding: const EdgeInsets.all(16),
-            color: Colors.indigo[900],
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A4B), // Dark Navy
+              borderRadius: BorderRadius.circular(16), // Gol corners
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -78,7 +83,7 @@ class _StaffScreenState extends State<StaffScreen> {
                       children: [
                         Icon(Icons.people, color: Colors.blueAccent),
                         SizedBox(width: 8),
-                        Text("Staff Haazri", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                        Text("Staff Haazri", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     Text("Attendance aur Pagar Book", style: TextStyle(color: Colors.white70, fontSize: 12)),
@@ -86,24 +91,28 @@ class _StaffScreenState extends State<StaffScreen> {
                 ),
                 Row(
                   children: [
-                    ElevatedButton(
+                    // + NAYA Button (Chhota aur clean)
+                    OutlinedButton(
                       onPressed: () => _showAddStaffDialog(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo[700], 
-                        foregroundColor: Colors.white,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white, 
+                        side: const BorderSide(color: Colors.white54),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text("+ NAYA"),
+                      child: const Text("+ NAYA", style: TextStyle(fontSize: 12)),
                     ),
                     const SizedBox(width: 8),
+                    // + HAAZRI Button
                     ElevatedButton(
                       onPressed: () => _showAddAttendanceDialog(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white, 
-                        foregroundColor: Colors.indigo,
+                        foregroundColor: const Color(0xFF1A1A4B),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text("+ HAAZRI"),
+                      child: const Text("+ HAAZRI", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 )
@@ -111,9 +120,9 @@ class _StaffScreenState extends State<StaffScreen> {
             ),
           ),
 
-          // Summary Cards (PWA Style - Clean without borders)
+          // Summary Cards
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -123,6 +132,8 @@ class _StaffScreenState extends State<StaffScreen> {
               ],
             ),
           ),
+
+          const SizedBox(height: 16),
 
           // Search Bar
           Padding(
@@ -189,7 +200,6 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  // Clean Summary Card (No border)
   Widget _buildSummaryCard(String title, String value, Color color) {
     return Container(
       width: 105,
@@ -209,7 +219,6 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  // Dialog: Naya Staff Add karna (Wahi purana)
   void _showAddStaffDialog() {
     final nameController = TextEditingController();
     final mobileController = TextEditingController();
@@ -262,7 +271,6 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  // Dialog: Haazri Lagana (Wahi purana)
   void _showAddAttendanceDialog() {
     String? selectedStaffId;
     String selectedStatus = "Present";
