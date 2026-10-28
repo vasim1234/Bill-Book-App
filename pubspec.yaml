@@ -14,7 +14,9 @@ dependencies:
   path: ^1.8.3
   qr_flutter: ^4.1.0
   url_launcher: ^6.2.2   # <--- Ye line yahan add karni hai
-
+  pdf: ^3.10.4
+  printing: ^5.11.1
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
