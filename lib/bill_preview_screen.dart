@@ -258,17 +258,19 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
             ),
           ),
 
-          // Sub-header info (Date & Status Badge)
+                    // Sub-header info (Date & Status Badge Fixed)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                const Text("Est. 2021 • Premium Quality", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                const Text("Est. 2021 • Premium Quality", style: TextStyle(fontSize: 9, color: Colors.grey)),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text("Invoice Date: ${_billData!['date']}  |  ", style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                    const Text("Status: ", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text("Date: ${_billData!['date']} | ", style: const TextStyle(fontSize: 9, color: Colors.grey)),
+                    const Text("Status: ", style: TextStyle(fontSize: 9, color: Colors.grey)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
