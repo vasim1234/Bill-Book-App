@@ -65,60 +65,77 @@ class _StaffScreenState extends State<StaffScreen> {
       body: Column(
         children: [
           // Top Header (PWA Style Floating Card)
-          Container(
-            margin: const EdgeInsets.all(16), // Sabse zaroori - bahar se gap
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A4B), // Dark Navy
-              borderRadius: BorderRadius.circular(16), // Gol corners
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Top Header (PWA Style Floating Card)
+Container(
+  margin: const EdgeInsets.all(16),
+  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12), // Padding adjust ki
+  decoration: BoxDecoration(
+    color: const Color(0xFF1A1A4B),
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+  ),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      // Left Side Text
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.people, color: Colors.blueAccent),
-                        SizedBox(width: 8),
-                        Text("Staff Haazri", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    Text("Attendance aur Pagar Book", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ],
+                const Icon(Icons.people, color: Colors.blueAccent, size: 20),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: const Text(
+                    "Staff Haazri", 
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                Row(
-                  children: [
-                    // + NAYA Button (Chhota aur clean)
-                    OutlinedButton(
-                      onPressed: () => _showAddStaffDialog(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white, 
-                        side: const BorderSide(color: Colors.white54),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text("+ NAYA", style: TextStyle(fontSize: 12)),
-                    ),
-                    const SizedBox(width: 8),
-                    // + HAAZRI Button
-                    ElevatedButton(
-                      onPressed: () => _showAddAttendanceDialog(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white, 
-                        foregroundColor: const Color(0xFF1A1A4B),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text("+ HAAZRI", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                )
               ],
             ),
+            const SizedBox(height: 2),
+            const Text("Attendance aur Pagar Book", style: TextStyle(color: Colors.white70, fontSize: 10), overflow: TextOverflow.ellipsis),
+          ],
+        ),
+      ),
+      
+      // Right Side Buttons
+      Row(
+        children: [
+          // + NAYA Button (Chhota kiya)
+          OutlinedButton(
+            onPressed: () => _showAddStaffDialog(),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white, 
+              side: const BorderSide(color: Colors.white54),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Padding kam ki
+              minimumSize: const Size(0, 32), // Height fix ki
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            child: const Text("+ NAYA", style: TextStyle(fontSize: 10)),
           ),
+          const SizedBox(width: 6),
+          // + HAAZRI Button (Chhota kiya)
+          ElevatedButton(
+            onPressed: () => _showAddAttendanceDialog(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white, 
+              foregroundColor: const Color(0xFF1A1A4B),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Padding kam ki
+              minimumSize: const Size(0, 32), // Height fix ki
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            child: const Text("+ HAAZRI", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      )
+    ],
+  ),
+),
 
           // Summary Cards
           Padding(
