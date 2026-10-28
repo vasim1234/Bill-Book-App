@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'add_item_screen.dart';
-import 'edit_item_screen.dart'; // Naya import
+import 'edit_item_screen.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key});
@@ -13,12 +13,12 @@ class StockScreen extends StatefulWidget {
 class _StockScreenState extends State<StockScreen> {
   List<Map<String, dynamic>> _items = [];
   double _totalStockValue = 0.0; 
-  double _thisMonthSale = 0.0; // Naya variable
+  double _thisMonthSale = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _loadData(); // Sab data ek sath load karenge
+    _loadData();
   }
 
   void _loadData() async {
@@ -30,7 +30,6 @@ class _StockScreenState extends State<StockScreen> {
       totalValue += (price * stock);
     }
 
-    // Is mahine ki sale nikaalo
     double monthSale = await DatabaseHelper().getThisMonthSale();
 
     setState(() { 
@@ -56,30 +55,99 @@ class _StockScreenState extends State<StockScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Upar ka Dashboard (Stock Value + Month Sale)
+          // --- NAYA PREMIUM DASHBOARD HEADER ---
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.indigo[50],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Stock Value
-                Column(
-                  children: [
-                    const Text('STOCK VALUE', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 5),
-                    Text('₹ ${_totalStockValue.toStringAsFixed(1)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo[900])),
-                  ],
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.indigo.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                // Divider
-                Container(height: 40, width: 1, color: Colors.grey[400]),
-                // This Month Sale
-                Column(
-                  children: [
-                    const Text('THIS MONTH SOLD', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 5),
-                    Text('₹ ${_thisMonthSale.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green[800])),
-                  ],
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Stock Value Box
+                Expanded(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.indigo[50],
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.inventory_2, color: Colors.indigo),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'STOCK VALUE',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '₹ ${_totalStockValue.toStringAsFixed(1)}',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo[900],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Divider Line
+                Container(
+                  height: 60,
+                  width: 1.5,
+                  color: Colors.grey[200],
+                ),
+                
+                // This Month Sale Box
+                Expanded(
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.trending_up, color: Colors.green),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'THIS MONTH SOLD',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '₹ ${_thisMonthSale.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -113,11 +181,10 @@ class _StockScreenState extends State<StockScreen> {
                                     IconButton(
                                       icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
                                       onPressed: () async {
-                                        // Edit screen par jao aur result ka wait karo
                                         final result = await Navigator.push(context, MaterialPageRoute(
                                           builder: (context) => EditItemScreen(item: item)
                                         ));
-                                        if (result == true) { _loadData(); } // Agar save hua toh list refresh karo
+                                        if (result == true) { _loadData(); } 
                                       },
                                     ),
                                   ],
