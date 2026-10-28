@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'database_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final VoidCallback? onSettingsSaved; // Naya parameter
+
+  const SettingsScreen({super.key, this.onSettingsSaved});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -19,7 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedTheme = "Modern Boxed";
   String _selectedType = "Wholesaler";
 
-  final List<String> _themes = ["Modern Boxed", "Classic Minimal", "Dark Header"];
+  final List<String> _themes = ["Mobile (Thermal)", "Modern Boxed", "Classic Minimal", "Dark Header"];
   final List<String> _types = ["Wholesaler", "Retailer", "Distributor"];
 
   @override
@@ -57,6 +59,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     
     if (mounted) {
+      // Callback call karo taaki main screen ko pata chale ki theme change hui hai
+      widget.onSettingsSaved?.call(); 
+      
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings Saved Successfully!')));
     }
@@ -201,7 +206,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Type aur Owner Name ko neeche-upar kar diya hai taaki jagah bache
                 Row(
                   children: [
                     Expanded(
@@ -212,7 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         ),
                         value: _selectedType,
-                        isExpanded: true, // Text ko box ke andar fit karne ke liye
+                        isExpanded: true,
                         items: _types.map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
                         onChanged: (value) => setState(() => _selectedType = value!),
                       ),
