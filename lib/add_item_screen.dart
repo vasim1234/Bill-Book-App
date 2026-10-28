@@ -1,48 +1,37 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
 
-class EditItemScreen extends StatefulWidget {
-  final Map<String, dynamic> item;
-  const EditItemScreen({super.key, required this.item});
+class AddItemScreen extends StatefulWidget {
+  const AddItemScreen({super.key});
 
   @override
-  State<EditItemScreen> createState() => _EditItemScreenState();
+  State<AddItemScreen> createState() => _AddItemScreenState();
 }
 
-class _EditItemScreenState extends State<EditItemScreen> {
-  final _nameController = TextEditingController();
+class _AddItemScreenState extends State<AddItemScreen> {
+  final _itemController = TextEditingController();
   final _purchasePriceController = TextEditingController();
   final _salePriceController = TextEditingController();
   final _stockController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    // Purani values fields mein daal do
-    _nameController.text = widget.item['itemName'];
-    _purchasePriceController.text = (widget.item['purchasePrice'] ?? 0.0).toString();
-    _salePriceController.text = widget.item['price'].toString();
-    _stockController.text = widget.item['stock'].toString();
-  }
-
-  void _updateItem() async {
-    String name = _nameController.text;
+  void _saveItem() async {
+    String item = _itemController.text;
     double purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0.0;
     double salePrice = double.tryParse(_salePriceController.text) ?? 0.0;
     int stock = int.tryParse(_stockController.text) ?? 0;
 
-    if (name.isNotEmpty) {
-      // Yahan 5 arguments pass kiye hain
-      await DatabaseHelper().updateItem(
-        widget.item['id'], 
-        name, 
-        salePrice, 
-        purchasePrice, 
-        stock
-      );
-      if (mounted) Navigator.pop(context, true); 
+    if (item.isNotEmpty && salePrice > 0 && stock >= 0) {
+      await DatabaseHelper().insertItem({
+        'itemName': item,
+        'purchasePrice': purchasePrice,
+        'price': salePrice,
+        'stock': stock,
+      });
+      if (mounted) Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Naam likhna zaroori hai!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item ka naam, Sale Price aur Stock zaroori hai!')),
+      );
     }
   }
 
@@ -51,9 +40,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Edit Item"), 
-        backgroundColor: Colors.indigo[900], 
-        foregroundColor: Colors.white
+        title: const Text("Naya Maal Add Karo"),
+        backgroundColor: Colors.indigo[900],
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -67,15 +56,25 @@ class _EditItemScreenState extends State<EditItemScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Row(
+                children: [
+                  Icon(Icons.inventory, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text("Naya Stock Jodein", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                ],
+              ),
+              const SizedBox(height: 20),
+
               const Text("ITEM NAME", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
               const SizedBox(height: 5),
               TextField(
-                controller: _nameController, 
+                controller: _itemController,
                 decoration: InputDecoration(
+                  hintText: "E.g., Cotton Shirt",
                   filled: true,
                   fillColor: Colors.grey[50],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                )
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -88,13 +87,14 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         const Text("PURCHASE (₹)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
                         const SizedBox(height: 5),
                         TextField(
-                          controller: _purchasePriceController, 
-                          keyboardType: TextInputType.number, 
+                          controller: _purchasePriceController,
+                          keyboardType: TextInputType.number,
                           decoration: InputDecoration(
+                            hintText: "0",
                             filled: true,
                             fillColor: Colors.grey[50],
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                          )
+                          ),
                         ),
                       ],
                     ),
@@ -107,13 +107,14 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         const Text("SALE (₹)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
                         const SizedBox(height: 5),
                         TextField(
-                          controller: _salePriceController, 
-                          keyboardType: TextInputType.number, 
+                          controller: _salePriceController,
+                          keyboardType: TextInputType.number,
                           decoration: InputDecoration(
+                            hintText: "0",
                             filled: true,
                             fillColor: Colors.grey[50],
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                          )
+                          ),
                         ),
                       ],
                     ),
@@ -125,13 +126,14 @@ class _EditItemScreenState extends State<EditItemScreen> {
               const Text("TOTAL PCS", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
               const SizedBox(height: 5),
               TextField(
-                controller: _stockController, 
-                keyboardType: TextInputType.number, 
+                controller: _stockController,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
+                  hintText: "0",
                   filled: true,
                   fillColor: Colors.grey[50],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                )
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -139,13 +141,13 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: _updateItem,
+                  onPressed: _saveItem,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo[900],
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text("Update Item", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text("Save & Go to Stock", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               )
             ],
