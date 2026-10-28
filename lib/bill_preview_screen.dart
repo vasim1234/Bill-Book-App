@@ -26,7 +26,13 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     final bills = await DatabaseHelper().getAllBills();
     final bill = bills.firstWhere((element) => element['id'] == widget.billId);
     final items = await DatabaseHelper().getBillItems(widget.billId);
-    final settings = await DatabaseHelper().getSettings();
+    var settings = await DatabaseHelper().getSettings();
+
+    // Agar settings null hai toh default row insert kar do
+    if (settings == null) {
+      await DatabaseHelper().saveSettings({'businessName': 'MY BUSINESS', 'theme': 'Modern Boxed'});
+      settings = await DatabaseHelper().getSettings();
+    }
 
     setState(() {
       _billData = bill;
@@ -52,136 +58,136 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
-  // Theme Change karne ka Dialog (Fixed Click)
-void _showThemePickerDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: const Text("Bill Theme Change Karein"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            "Mobile (Thermal)",
-            "Modern Boxed",
-            "Classic Minimal",
-            "Dark Header"
-          ].map((themeName) {
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(themeName, style: const TextStyle(fontWeight: FontWeight.w500)),
-              leading: Radio<String>(
-                value: themeName,
-                groupValue: _settings?['theme'] ?? "Modern Boxed",
-                // Radio ko clickable banane ke liye onChanged zaroori hai
-                onChanged: (value) async {
-                  await DatabaseHelper().updateTheme(value!);
+  // Theme Change karne ka Dialog
+  void _showThemePickerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Bill Theme Change Karein"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              "Mobile (Thermal)",
+              "Modern Boxed",
+              "Classic Minimal",
+              "Dark Header"
+            ].map((themeName) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(themeName, style: const TextStyle(fontWeight: FontWeight.w500)),
+                leading: Radio<String>(
+                  value: themeName,
+                  groupValue: _settings?['theme'] ?? "Modern Boxed",
+                  onChanged: (value) async {
+                    await DatabaseHelper().updateTheme(value!);
+                    setState(() {
+                      _settings?['theme'] = value;
+                    });
+                    Navigator.pop(dialogContext); 
+                  },
+                ),
+                onTap: () async {
+                  await DatabaseHelper().updateTheme(themeName);
                   setState(() {
-                    _settings?['theme'] = value;
+                    _settings?['theme'] = themeName;
                   });
-                  Navigator.pop(dialogContext); // Dialog band karo
+                  Navigator.pop(dialogContext); 
                 },
-              ),
-              // ListTile par click karne se bhi theme change ho
-              onTap: () async {
-                await DatabaseHelper().updateTheme(themeName);
-                setState(() {
-                  _settings?['theme'] = themeName;
-                });
-                Navigator.pop(dialogContext); // Dialog band karo
-              },
-            );
-          }).toList(),
-        ),
-      );
-    },
-  );
-}
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_billData == null) {
-      return const Center(child: CircularProgressIndicator());
+    if (_billData == null || _settings == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Bill Preview")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     String theme = _settings?['theme'] ?? "Modern Boxed"; 
 
-    return Container(
-      color: Colors.grey[200],
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            // Change Theme Button (Top par)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    _showThemePickerDialog(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Bill Preview"),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              _showThemePickerDialog(context);
+            },
+            icon: const Icon(Icons.palette, color: Colors.white),
+            label: const Text("Theme", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+      body: Container(
+        color: Colors.grey[200],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            children: [
+              // Theme ke hisaab se bill design render karo
+              if (theme == "Mobile (Thermal)") _buildThermalReceipt(),
+              if (theme == "Modern Boxed") _buildModernBoxed(),
+              if (theme == "Classic Minimal") _buildClassicMinimal(),
+              if (theme == "Dark Header") _buildDarkHeader(),
+
+              const SizedBox(height: 20),
+
+              // Action Buttons
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thermal Printer feature coming next!'))); },
+                  icon: const Icon(Icons.print),
+                  label: const Text("Thermal Printer / Bluetooth Print", style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 10),
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF feature coming next!'))); },
+                      icon: const Icon(Icons.picture_as_pdf),
+                      label: const Text("Save PDF"),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400], foregroundColor: Colors.black),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _sendWhatsAppBill,
+                      icon: const Icon(Icons.message),
+                      label: const Text("WhatsApp Bill"),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: () { 
+                    Navigator.pop(context); 
                   },
-                  icon: const Icon(Icons.palette, color: Colors.indigo),
-                  label: const Text("Change Theme", style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+                  child: const Text("New Sale", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Theme ke hisaab se bill design render karo
-            if (theme == "Mobile (Thermal)") _buildThermalReceipt(),
-            if (theme == "Modern Boxed") _buildModernBoxed(),
-            if (theme == "Classic Minimal") _buildClassicMinimal(),
-            if (theme == "Dark Header") _buildDarkHeader(),
-
-            const SizedBox(height: 20),
-
-            // Action Buttons
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thermal Printer feature coming next!'))); },
-                icon: const Icon(Icons.print),
-                label: const Text("Thermal Printer / Bluetooth Print", style: TextStyle(fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
               ),
-            ),
-            const SizedBox(height: 10),
-            
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF feature coming next!'))); },
-                    icon: const Icon(Icons.picture_as_pdf),
-                    label: const Text("Save PDF"),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400], foregroundColor: Colors.black),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _sendWhatsAppBill,
-                    icon: const Icon(Icons.message),
-                    label: const Text("WhatsApp Bill"),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton(
-                onPressed: () { 
-                  Navigator.pop(context); 
-                },
-                child: const Text("New Sale", style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -196,8 +202,6 @@ void _showThemePickerDialog(BuildContext context) {
     String mobile = _settings?['mobile'] ?? "";
     String upiId = _settings?['upiId'] ?? "";
     String businessType = _settings?['businessType'] ?? "Wholesaler";
-    String totalAmount = _billData!['totalAmount'].toString();
-    String upiLink = "upi://pay?pa=$upiId&pn=$businessName&am=$totalAmount&cu=INR";
 
     return Card(
       elevation: 4,
@@ -277,21 +281,9 @@ void _showThemePickerDialog(BuildContext context) {
               ),
             ),
             const SizedBox(height: 20),
-            if (upiId.isNotEmpty) ...[
-              const Text("SCAN & PAY VIA UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
-              const SizedBox(height: 10),
-              QrImageView(data: upiLink, version: QrVersions.auto, size: 140.0),
-              const SizedBox(height: 8),
-              Text(upiId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            ],
+            _buildQrAndFooter(businessName, upiId),
             const SizedBox(height: 15),
             const Text("THANK YOU, VISIT AGAIN!", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
-            const SizedBox(height: 20),
-            const Text("------------------------------------------------", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
-            const SizedBox(height: 10),
-            const Text("BHAI BHAI BILLBOOK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
-            const Text("studio-wood-two-88.vercel.app", style: TextStyle(fontSize: 10, color: Colors.grey)),
-            const SizedBox(height: 10),
           ],
         ),
       ),
