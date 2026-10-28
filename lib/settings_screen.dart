@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'database_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final VoidCallback? onSettingsSaved; // Naya parameter
+  final VoidCallback? onSettingsSaved; // Theme/Settings change ka callback
 
   const SettingsScreen({super.key, this.onSettingsSaved});
 
@@ -46,6 +46,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  // Theme badalte hi turant Database me save karo (Bina Save Button dabaye)
+  void _onThemeChanged(String? newTheme) async {
+    if (newTheme == null) return;
+    
+    setState(() {
+      _selectedTheme = newTheme;
+    });
+
+    // Instant Save in DB
+    await DatabaseHelper().updateTheme(newTheme);
+
+    // Main screen/Bill Preview ko notify karo
+    widget.onSettingsSaved?.call();
+  }
+
   void _saveData() async {
     await DatabaseHelper().saveSettings({
       'businessName': _businessController.text,
@@ -59,9 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     
     if (mounted) {
-      // Callback call karo taaki main screen ko pata chale ki theme change hui hai
       widget.onSettingsSaved?.call(); 
-      
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings Saved Successfully!')));
     }
@@ -90,7 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // --- APP SHARE BUTTON (PWA Style) ---
+                // --- APP SHARE BUTTON ---
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -113,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSectionTitle("Bill Layout & Theme"),
                 const SizedBox(height: 10),
                 
-                // Bill Layout (Dummy buttons for UI)
+                // Bill Layout Buttons
                 Row(
                   children: [
                     Expanded(
@@ -145,7 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Invoice Theme Dropdown
+                // Invoice Theme Dropdown (INSTANT CHANGE)
                 DropdownButtonFormField<String>(
                   decoration: const InputDecoration(
                     labelText: "Invoice Theme", 
@@ -154,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   value: _selectedTheme,
                   items: _themes.map((theme) => DropdownMenuItem(value: theme, child: Text(theme))).toList(),
-                  onChanged: (value) => setState(() => _selectedTheme = value!),
+                  onChanged: _onThemeChanged, // Ab yahan instant save call hoga
                 ),
                 const SizedBox(height: 20),
 
