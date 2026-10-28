@@ -18,7 +18,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
     return await openDatabase(
       path,
-      version: 8, // Version 8
+      version: 8, 
       onCreate: (db, version) async {
         await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
         await db.execute('CREATE TABLE bill_items(id INTEGER PRIMARY KEY AUTOINCREMENT, billId INTEGER, itemName TEXT, quantity INTEGER, price REAL)');
@@ -136,6 +136,28 @@ class DatabaseHelper {
     return await db.update('customers', {'name': name, 'mobile': mobile}, where: 'id = ?', whereArgs: [id]);
   }
 
+  // ================= TRANSACTION EDIT & DELETE FUNCTIONS =================
+
+  Future<int> updateTransaction(Map<String, dynamic> row) async {
+    Database db = await database;
+    int id = row['id'];
+    return await db.update(
+      'transactions', 
+      row, 
+      where: 'id = ?', 
+      whereArgs: [id]
+    );
+  }
+
+  Future<int> deleteTransaction(int id) async {
+    Database db = await database;
+    return await db.delete(
+      'transactions', 
+      where: 'id = ?', 
+      whereArgs: [id]
+    );
+  }
+
   // ================= STOCK & BILL FUNCTIONS =================
 
   Future<int> insertItem(Map<String, dynamic> row) async { Database db = await database; return await db.insert('items', row); }
@@ -182,7 +204,6 @@ class DatabaseHelper {
     return await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace); 
   }
   
-  // Theme update function (Fixed to handle missing settings row)
   Future<int> updateTheme(String newTheme) async {
     Database db = await database;
     List<Map<String, dynamic>> existing = await db.query('settings', where: 'id = ?', whereArgs: [1]);
@@ -286,24 +307,3 @@ class DatabaseHelper {
     };
   }
 }
-  // ================= TRANSACTION EDIT & DELETE FUNCTIONS =================
-
-  Future<int> updateTransaction(Map<String, dynamic> row) async {
-    Database db = await database;
-    int id = row['id'];
-    return await db.update(
-      'transactions', 
-      row, 
-      where: 'id = ?', 
-      whereArgs: [id]
-    );
-  }
-
-  Future<int> deleteTransaction(int id) async {
-    Database db = await database;
-    return await db.delete(
-      'transactions', 
-      where: 'id = ?', 
-      whereArgs: [id]
-    );
-  }
