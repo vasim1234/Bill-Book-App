@@ -120,9 +120,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  // ==========================================
-  // VIP EDIT ENTRY POPUP (Aapke reference jaisa)
-  // ==========================================
   void _editOrDeleteTransaction(Map<String, dynamic> transaction) {
     final amountController = TextEditingController(text: transaction['amount'].toString());
     final noteController = TextEditingController(text: transaction['note'] ?? '');
@@ -140,7 +137,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title & Delete Icon Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -153,7 +149,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     IconButton(
                       icon: const Icon(Icons.delete_outline, color: Colors.red),
                       onPressed: () async {
-                        // Delete Transaction from Database
                         await DatabaseHelper().deleteTransaction(transId);
                         Navigator.pop(context);
                         _loadTransactions();
@@ -163,8 +158,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 15),
-
-                // Diya / Liye Toggle Buttons
                 Row(
                   children: [
                     Expanded(
@@ -213,8 +206,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // Amount Field
                 const Text("AMOUNT (₹)", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 4),
                 TextField(
@@ -226,8 +217,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-
-                // Note / Wajah Field
                 const Text("NOTE / WAJAH", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 4),
                 TextField(
@@ -238,8 +227,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 25),
-
-                // Cancel & Update Buttons
                 Row(
                   children: [
                     Expanded(
@@ -257,17 +244,16 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       child: ElevatedButton(
                         onPressed: () async {
                           if (amountController.text.isNotEmpty) {
-                            // Database update function call
                             await DatabaseHelper().updateTransaction({
                               'id': transId,
                               'customerId': widget.customerId,
                               'amount': double.parse(amountController.text),
                               'type': selectedType,
                               'note': noteController.text.isEmpty ? "Cash Transaction" : noteController.text,
-                              'date': transaction['date'], // Date same rakhi hai
+                              'date': transaction['date'],
                             });
                             Navigator.pop(context);
-                            _loadTransactions(); // Refresh list & balance
+                            _loadTransactions();
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Entry updated successfully!')));
                           }
                         },
@@ -345,7 +331,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       ),
       body: Column(
         children: [
-          // --- VIP STYLISH BALANCE CARD ---
           Container(
             width: double.infinity,
             margin: const EdgeInsets.all(12),
@@ -379,8 +364,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               ],
             ),
           ),
-
-          // --- REPORT & REMINDER BUTTONS ---
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Row(
@@ -415,8 +398,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           ),
           const SizedBox(height: 10),
           const Divider(height: 1),
-
-          // --- TRANSACTIONS LIST ---
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             color: Colors.grey[200],
@@ -428,7 +409,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
               ],
             ),
           ),
-          
           Expanded(
             child: _transactions.isEmpty
                 ? const Center(child: Text("Koi entry nahi hai."))
@@ -486,7 +466,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           ),
         ],
       ),
-      
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
@@ -557,7 +536,7 @@ class CustomerStatementScreen extends StatelessWidget {
                   children: [
                     pw.Text("Customer Name: $customerName", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
                     pw.SizedBox(height: 4),
-                    pw.Text("Phone: $customerMobile", style: const TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                    pw.Text("Phone: $customerMobile", style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
                   ],
                 ),
                 pw.Column(
@@ -565,7 +544,7 @@ class CustomerStatementScreen extends StatelessWidget {
                   children: [
                     pw.Text("Net Balance: ₹${balance.abs().toStringAsFixed(2)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12, color: balance > 0 ? PdfColors.red : PdfColors.green)),
                     pw.SizedBox(height: 4),
-                    pw.Text(balance > 0 ? "Aapko lene hain" : (balance < 0 ? "Aapko dene hain" : "Clear"), style: const TextStyle(fontSize: 10)),
+                    pw.Text(balance > 0 ? "Aapko lene hain" : (balance < 0 ? "Aapko dene hain" : "Clear"), style: const pw.TextStyle(fontSize: 10)),
                   ],
                 ),
               ],
@@ -601,7 +580,6 @@ class CustomerStatementScreen extends StatelessWidget {
     await Printing.sharePdf(bytes: await pdf.save(), filename: 'statement_$customerName.pdf');
   }
 
-  @byte
   @override
   Widget build(BuildContext context) {
     Color statusColor = balance > 0 ? Colors.red : (balance < 0 ? Colors.green : Colors.grey);
