@@ -53,22 +53,21 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  if (_billData == null) {
-    return const Center(child: CircularProgressIndicator());
-  }
+  Widget build(BuildContext context) {
+    if (_billData == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-  String theme = _settings?['theme'] ?? "Modern Boxed"; 
+    String theme = _settings?['theme'] ?? "Modern Boxed"; 
 
-  // Yahan se apna Scaffold aur AppBar hata diya hai
-  return Container(
-    color: Colors.grey[200],
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(12.0),
-      // ... baaki code waisa hi rahega
+    return Container(
+      color: Colors.grey[200],
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
             // Theme ke hisaab se bill design render karo
+            if (theme == "Mobile (Thermal)") _buildThermalReceipt(),
             if (theme == "Modern Boxed") _buildModernBoxed(),
             if (theme == "Classic Minimal") _buildClassicMinimal(),
             if (theme == "Dark Header") _buildDarkHeader(),
@@ -115,7 +114,7 @@ Widget build(BuildContext context) {
               height: 50,
               child: OutlinedButton(
                 onPressed: () { 
-                  Navigator.pop(context); // Wapas main screen par jao
+                  Navigator.pop(context); 
                 },
                 child: const Text("New Sale", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
@@ -128,7 +127,155 @@ Widget build(BuildContext context) {
   }
 
   // ==========================================
-  // 1. MODERN BOXED THEME
+  // 1. MOBILE (THERMAL) RECEIPT THEME (Naya)
+  // ==========================================
+  Widget _buildThermalReceipt() {
+    String businessName = _settings?['businessName'] ?? "MY BUSINESS";
+    String address = _settings?['address'] ?? "";
+    String mobile = _settings?['mobile'] ?? "";
+    String upiId = _settings?['upiId'] ?? "";
+    String businessType = _settings?['businessType'] ?? "Wholesaler";
+    String totalAmount = _billData!['totalAmount'].toString();
+    String upiLink = "upi://pay?pa=$upiId&pn=$businessName&am=$totalAmount&cu=INR";
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        color: Colors.white,
+        child: Column(
+          children: [
+            // 1. Header (Business Details)
+            Text(businessName.toUpperCase(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)),
+            const SizedBox(height: 4),
+            Text(businessType.toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.grey, letterSpacing: 1)),
+            const SizedBox(height: 4),
+            Text(address, style: const TextStyle(fontSize: 13)),
+            Text("Mob: $mobile", style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 15),
+            const Text("------------------------------------------------", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
+
+            // 2. Bill Info
+            const SizedBox(height: 10),
+            _buildThermalRow("Bill No:", "#INV-${_billData!['id']}"),
+            _buildThermalRow("Date:", _billData!['date']),
+            _buildThermalRow("Customer:", _billData!['customerName']),
+            _buildThermalRow("Phone:", _billData!['customerMobile'] ?? ""),
+            
+            const SizedBox(height: 10),
+            const Text("------------------------------------------------", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
+            
+            // 3. Table Header
+            const SizedBox(height: 10),
+            const Row(
+              children: [
+                Expanded(flex: 3, child: Text("Item", style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(flex: 1, child: Text("Qty", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(flex: 2, child: Text("Total", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold))),
+              ],
+            ),
+            const Divider(color: Colors.grey),
+
+            // 4. Items
+            ..._billItems.map((item) {
+              double amount = item['price'] * item['quantity'];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3, 
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item['itemName'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text("₹${item['price']}/pc", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                        ],
+                      )
+                    ),
+                    Expanded(flex: 1, child: Text(item['quantity'].toString(), textAlign: TextAlign.center)),
+                    Expanded(flex: 2, child: Text("₹${amount.toStringAsFixed(2)}", textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                ),
+              );
+            }),
+
+            const SizedBox(height: 10),
+            const Divider(color: Colors.black, thickness: 1.5),
+
+            // 5. Total
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("TOTAL", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text("₹ ${_billData!['totalAmount']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+              ],
+            ),
+            const Divider(color: Colors.black, thickness: 1.5),
+            const SizedBox(height: 15),
+
+            // 6. Payment Status Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.red.withOpacity(0.5)),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.red[50],
+              ),
+              child: Text(
+                _billData!['paymentStatus'],
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, letterSpacing: 2),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // 7. QR Code
+            if (upiId.isNotEmpty) ...[
+              const Text("SCAN & PAY VIA UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
+              const SizedBox(height: 10),
+              QrImageView(
+                data: upiLink,
+                version: QrVersions.auto,
+                size: 140.0,
+              ),
+              const SizedBox(height: 8),
+              Text(upiId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            ],
+
+            const SizedBox(height: 15),
+            const Text("THANK YOU, VISIT AGAIN!", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+
+            const SizedBox(height: 20),
+            const Text("------------------------------------------------", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
+            const SizedBox(height: 10),
+
+            // 8. Footer
+            const Text("BHAI BHAI BILLBOOK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
+            const Text("studio-wood-two-88.vercel.app", style: TextStyle(fontSize: 10, color: Colors.grey)),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThermalRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // 2. MODERN BOXED THEME
   // ==========================================
   Widget _buildModernBoxed() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
@@ -251,7 +398,7 @@ Widget build(BuildContext context) {
   }
 
   // ==========================================
-  // 2. CLASSIC MINIMAL THEME
+  // 3. CLASSIC MINIMAL THEME
   // ==========================================
   Widget _buildClassicMinimal() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
@@ -342,7 +489,7 @@ Widget build(BuildContext context) {
   }
 
   // ==========================================
-  // 3. DARK HEADER THEME
+  // 4. DARK HEADER THEME
   // ==========================================
   Widget _buildDarkHeader() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
