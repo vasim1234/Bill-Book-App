@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
-import 'staff_detail_screen.dart'; // Ye import zaroori hai
+import 'staff_detail_screen.dart';
 
 class StaffScreen extends StatefulWidget {
   const StaffScreen({super.key});
@@ -14,6 +14,8 @@ class _StaffScreenState extends State<StaffScreen> {
   int _presentCount = 0;
   int _absentCount = 0;
   double _totalSalary = 0;
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _filteredStaff = [];
 
   @override
   void initState() {
@@ -41,18 +43,28 @@ class _StaffScreenState extends State<StaffScreen> {
 
     setState(() {
       _staffList = staff;
+      _filteredStaff = staff;
       _presentCount = present;
       _absentCount = absent;
       _totalSalary = totalWage;
     });
   }
 
+  void _filterStaff(String query) {
+    setState(() {
+      _filteredStaff = _staffList.where((staff) {
+        return staff['name'].toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       body: Column(
         children: [
-          // Top Header
+          // Top Header (Dark Blue)
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.indigo[900],
@@ -64,7 +76,7 @@ class _StaffScreenState extends State<StaffScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.people, color: Colors.blue),
+                        Icon(Icons.people, color: Colors.blueAccent),
                         SizedBox(width: 8),
                         Text("Staff Haazri", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                       ],
@@ -76,13 +88,21 @@ class _StaffScreenState extends State<StaffScreen> {
                   children: [
                     ElevatedButton(
                       onPressed: () => _showAddStaffDialog(),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[700], foregroundColor: Colors.white),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo[700], 
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
                       child: const Text("+ NAYA"),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () => _showAddAttendanceDialog(),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.indigo),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white, 
+                        foregroundColor: Colors.indigo,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
                       child: const Text("+ HAAZRI"),
                     ),
                   ],
@@ -91,9 +111,9 @@ class _StaffScreenState extends State<StaffScreen> {
             ),
           ),
 
-          // Summary Cards
+          // Summary Cards (PWA Style - Clean without borders)
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -106,39 +126,59 @@ class _StaffScreenState extends State<StaffScreen> {
 
           // Search Bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
+              controller: _searchController,
+              onChanged: _filterStaff,
               decoration: InputDecoration(
                 hintText: "Staff ka naam dhundhein...",
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
           ),
+          const SizedBox(height: 10),
 
           // Staff List
           Expanded(
-            child: _staffList.isEmpty
-                ? const Center(child: Text("Koi staff add nahi kiya gaya hai."))
+            child: _filteredStaff.isEmpty
+                ? const Center(child: Text("Koi staff add nahi kiya gaya hai.", style: TextStyle(color: Colors.grey)))
                 : ListView.builder(
-                    itemCount: _staffList.length,
+                    itemCount: _filteredStaff.length,
                     itemBuilder: (context, index) {
-                      final staff = _staffList[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        child: ListTile(
-                          // Yahan onTap add kiya hai
+                      final staff = _filteredStaff[index];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                        ),
+                        child: InkWell(
                           onTap: () async {
                             await Navigator.push(context, MaterialPageRoute(
                               builder: (context) => StaffDetailScreen(staff: staff)
                             ));
-                            _loadData(); // Wapas aane par data refresh karo
+                            _loadData();
                           },
-                          leading: CircleAvatar(backgroundColor: Colors.indigo[100], child: Text(staff['name'][0])),
-                          title: Text(staff['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text("Mo: ${staff['mobile']} | ₹${staff['dailyWage']}/day"),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(staff['name'].toString().toUpperCase(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  Text("Mo: ${staff['mobile']} • Roz: ₹${staff['dailyWage']}", style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                ],
+                              ),
+                              const Icon(Icons.chevron_right, color: Colors.grey),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -149,26 +189,27 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
+  // Clean Summary Card (No border)
   Widget _buildSummaryCard(String title, String value, Color color) {
     return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      width: 105,
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(
         children: [
-          Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
-          const SizedBox(height: 8),
+          Text(title, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.5)),
+          const SizedBox(height: 10),
           Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 24)),
         ],
       ),
     );
   }
 
-  // Dialog: Naya Staff Add karna
+  // Dialog: Naya Staff Add karna (Wahi purana)
   void _showAddStaffDialog() {
     final nameController = TextEditingController();
     final mobileController = TextEditingController();
@@ -177,6 +218,7 @@ class _StaffScreenState extends State<StaffScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.person, color: Colors.indigo),
@@ -220,7 +262,7 @@ class _StaffScreenState extends State<StaffScreen> {
     );
   }
 
-  // Dialog: Haazri Lagana
+  // Dialog: Haazri Lagana (Wahi purana)
   void _showAddAttendanceDialog() {
     String? selectedStaffId;
     String selectedStatus = "Present";
@@ -231,6 +273,7 @@ class _StaffScreenState extends State<StaffScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Row(
               children: [
                 Icon(Icons.calendar_today, color: Colors.indigo),
