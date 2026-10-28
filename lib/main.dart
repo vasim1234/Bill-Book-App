@@ -41,6 +41,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   String _businessName = "My Dukan"; 
   int? _previewBillId; 
 
+  // Naya Variable: Bill theme refresh karne ke liye
+  int _themeRefreshKey = 0; 
+
   final List<Widget> _screens = [
     const CashScreen(),       
     const StockScreen(),      
@@ -66,8 +69,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Agar bill preview chal raha hai, toh usko 'key' pass karo
     Widget bodyWidget = _previewBillId != null 
-        ? BillPreviewScreen(billId: _previewBillId!) 
+        ? BillPreviewScreen(
+            key: ValueKey('bill_$_themeRefreshKey'), // <-- Ye key badlegi toh bill refresh hoga
+            billId: _previewBillId!
+          ) 
         : _screens[_currentIndex];                   
 
     return Scaffold(
@@ -86,13 +93,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             builder: (context) => IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
+                // Yahan humne Drawer kholne ka wait kiya hai
                 Scaffold.of(context).openDrawer();
               },
             ),
           )
         ],
       ),
-      drawer: const SettingsScreen(),
+      
+      // SettingsScreen ko callback bhejo taaki theme save hone par bill refresh ho
+      drawer: SettingsScreen(
+        onSettingsSaved: () {
+          setState(() {
+            _themeRefreshKey++; // Key badhao taaki bill naya theme load kare
+            _loadBusinessName(); // Business Name bhi update karo (agar change hua ho)
+          });
+        },
+      ),
       
       body: bodyWidget,
       
@@ -131,7 +148,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         child: const Icon(Icons.shopping_cart, color: Colors.white),
       ),
       
-      // Yahan bilkul sahi syntax hai
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
