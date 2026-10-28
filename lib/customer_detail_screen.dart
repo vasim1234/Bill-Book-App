@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'database_helper.dart';
 
 class CustomerDetailScreen extends StatefulWidget {
@@ -42,7 +45,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     });
   }
 
-  // Customer Name/Number Edit karne ka popup
   void _editCustomer() {
     final nameController = TextEditingController(text: _currentName);
     final mobileController = TextEditingController(text: _currentMobile);
@@ -78,7 +80,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  // Paisa Add karne ka popup (Diye / Liye)
   void _addTransaction(String type) {
     final amountController = TextEditingController();
     final noteController = TextEditingController();
@@ -119,79 +120,175 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
-  // Transaction Edit ya Delete karne ka popup (Jab entry par click ho)
+  // ==========================================
+  // VIP EDIT ENTRY POPUP (Aapke reference jaisa)
+  // ==========================================
   void _editOrDeleteTransaction(Map<String, dynamic> transaction) {
     final amountController = TextEditingController(text: transaction['amount'].toString());
     final noteController = TextEditingController(text: transaction['note'] ?? '');
     String selectedType = transaction['type'];
+    int transId = transaction['id'];
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text("Edit Transaction"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<String>(
-                      title: const Text("Diya", style: TextStyle(color: Colors.red, fontSize: 13)),
-                      value: "DIYA",
-                      groupValue: selectedType,
-                      onChanged: (val) => setDialogState(() => selectedType = val!),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          contentPadding: const EdgeInsets.all(20),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title & Delete Icon Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Text("✏️ ", style: TextStyle(fontSize: 18)),
+                        Text("Edit Entry", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                      ],
                     ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<String>(
-                      title: const Text("Liye", style: TextStyle(color: Colors.green, fontSize: 13)),
-                      value: "LIYA",
-                      groupValue: selectedType,
-                      onChanged: (val) => setDialogState(() => selectedType = val!),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      onPressed: () async {
+                        // Delete Transaction from Database
+                        await DatabaseHelper().deleteTransaction(transId);
+                        Navigator.pop(context);
+                        _loadTransactions();
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Entry deleted successfully!')));
+                      },
                     ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+
+                // Diya / Liye Toggle Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setDialogState(() => selectedType = "DIYA"),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: selectedType == "DIYA" ? Colors.red : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "DIYA (GAVE)",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: selectedType == "DIYA" ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setDialogState(() => selectedType = "LIYA"),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: selectedType == "LIYA" ? Colors.green : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "LIYA (GOT)",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: selectedType == "LIYA" ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Amount Field
+                const Text("AMOUNT (₹)", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   ),
-                ],
-              ),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Amount (₹)", border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: noteController,
-                decoration: const InputDecoration(labelText: "Note / Wajah", border: OutlineInputBorder()),
-              ),
-            ],
+                ),
+                const SizedBox(height: 15),
+
+                // Note / Wajah Field
+                const Text("NOTE / WAJAH", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: noteController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                ),
+                const SizedBox(height: 25),
+
+                // Cancel & Update Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("CANCEL", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (amountController.text.isNotEmpty) {
+                            // Database update function call
+                            await DatabaseHelper().updateTransaction({
+                              'id': transId,
+                              'customerId': widget.customerId,
+                              'amount': double.parse(amountController.text),
+                              'type': selectedType,
+                              'note': noteController.text.isEmpty ? "Cash Transaction" : noteController.text,
+                              'date': transaction['date'], // Date same rakhi hai
+                            });
+                            Navigator.pop(context);
+                            _loadTransactions(); // Refresh list & balance
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Entry updated successfully!')));
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E3A8A),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("UPDATE ENTRY", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                // Delete transaction logic agar database helper me ho ya seedha pop
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Delete feature coming soon!')));
-              },
-              child: const Text("Delete", style: TextStyle(color: Colors.red)),
-            ),
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-            ElevatedButton(
-              onPressed: () async {
-                if (amountController.text.isNotEmpty) {
-                  // Database update logic yahan aayega
-                  Navigator.pop(context);
-                  _loadTransactions();
-                }
-              },
-              child: const Text("Update"),
-            ),
-          ],
         ),
       ),
     );
   }
 
-  // WhatsApp Reminder bhejna
   void _sendReminder() {
     if (_currentMobile.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mobile number nahi hai!')));
@@ -342,7 +439,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       bool isDiya = t['type'] == 'DIYA'; 
                       
                       return InkWell(
-                        onTap: () => _editOrDeleteTransaction(t), // Yahan click karne par edit popup khulega
+                        onTap: () => _editOrDeleteTransaction(t),
                         child: Column(
                           children: [
                             Padding(
@@ -433,7 +530,6 @@ class CustomerStatementScreen extends StatelessWidget {
     required this.transactions,
   });
 
-  // Real PDF Generate karke WhatsApp/Share karne ka function
   Future<void> _generateAndSharePdf(BuildContext context) async {
     final pdf = pw.Document();
 
@@ -443,7 +539,6 @@ class CustomerStatementScreen extends StatelessWidget {
         margin: const pw.EdgeInsets.all(32),
         build: (pw.Context context) {
           return [
-            // Header
             pw.Center(
               child: pw.Column(
                 children: [
@@ -454,8 +549,6 @@ class CustomerStatementScreen extends StatelessWidget {
               ),
             ),
             pw.SizedBox(height: 20),
-            
-            // Customer Info Box
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -480,8 +573,6 @@ class CustomerStatementScreen extends StatelessWidget {
             pw.SizedBox(height: 15),
             pw.Divider(),
             pw.SizedBox(height: 10),
-
-            // Transactions Table
             pw.Table.fromTextArray(
               headers: ['Date & Time', 'Note / Wajah', 'Diye (₹)', 'Liye (₹)'],
               data: transactions.map((t) {
@@ -498,7 +589,6 @@ class CustomerStatementScreen extends StatelessWidget {
               cellStyle: const pw.TextStyle(fontSize: 10),
               cellAlignment: pw.Alignment.centerLeft,
             ),
-            
             pw.SizedBox(height: 30),
             pw.Center(
               child: pw.Text("Generated via My Dukan App", style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
@@ -508,10 +598,10 @@ class CustomerStatementScreen extends StatelessWidget {
       ),
     );
 
-    // Share PDF directly (WhatsApp par file ke roop me jayegi)
     await Printing.sharePdf(bytes: await pdf.save(), filename: 'statement_$customerName.pdf');
   }
 
+  @byte
   @override
   Widget build(BuildContext context) {
     Color statusColor = balance > 0 ? Colors.red : (balance < 0 ? Colors.green : Colors.grey);
@@ -575,7 +665,6 @@ class CustomerStatementScreen extends StatelessWidget {
                   ],
                 ),
                 const Divider(height: 24),
-                
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                   color: Colors.grey[200],
@@ -587,7 +676,6 @@ class CustomerStatementScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                
                 ...transactions.map((t) {
                   bool isDiya = t['type'] == 'DIYA';
                   return Container(
@@ -625,7 +713,6 @@ class CustomerStatementScreen extends StatelessWidget {
                     ),
                   );
                 }),
-                
                 const SizedBox(height: 30),
                 Center(
                   child: SizedBox(
