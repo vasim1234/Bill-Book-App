@@ -41,14 +41,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   String _businessName = "My Dukan"; 
   int? _previewBillId; 
 
-  // Naya Variable: Bill theme refresh karne ke liye
   int _themeRefreshKey = 0; 
 
   final List<Widget> _screens = [
     const CashScreen(),       
     const StockScreen(),      
-    const Center(child: Text("Quick Add (Coming Soon)")),  
-    const Center(child: Text("Add Bill Screen (Coming Soon)")), 
+    const Center(child: Text("Add Bill Screen")),  
+    const Center(child: Text("Quick Add (Coming Soon)")), 
     const StaffScreen(), 
   ];
 
@@ -69,10 +68,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Agar bill preview chal raha hai, toh usko 'key' pass karo
     Widget bodyWidget = _previewBillId != null 
         ? BillPreviewScreen(
-            key: ValueKey('bill_$_themeRefreshKey'), // <-- Ye key badlegi toh bill refresh hoga
+            key: ValueKey('bill_$_themeRefreshKey'), 
             billId: _previewBillId!
           ) 
         : _screens[_currentIndex];                   
@@ -93,7 +91,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             builder: (context) => IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
-                // Yahan humne Drawer kholne ka wait kiya hai
                 Scaffold.of(context).openDrawer();
               },
             ),
@@ -101,12 +98,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
       
-      // SettingsScreen ko callback bhejo taaki theme save hone par bill refresh ho
       drawer: SettingsScreen(
         onSettingsSaved: () {
           setState(() {
-            _themeRefreshKey++; // Key badhao taaki bill naya theme load kare
-            _loadBusinessName(); // Business Name bhi update karo (agar change hua ho)
+            _themeRefreshKey++; 
+            _loadBusinessName(); 
           });
         },
       ),
@@ -116,7 +112,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
-        onTap: (index) {
+        onTap: (index) async {
+          // Index 2 matlab "Add" button hai
+          if (index == 2) {
+            final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
+            if (result != null && result is int) {
+               setState(() {
+                 _previewBillId = result; 
+               });
+            }
+            return;
+          }
+
           setState(() {
             _currentIndex = index;
             _previewBillId = null; 
@@ -127,28 +134,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.money), label: 'Cash'),
           BottomNavigationBarItem(icon: Icon(Icons.inventory), label: 'Stock'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_box), label: 'Add'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Add'),
           BottomNavigationBarItem(icon: Icon(Icons.flash_on), label: 'Quick'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
         ],
       ),
-      
-      floatingActionButton: _previewBillId != null ? null : FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddBillScreen()));
-          if (result != null && result is int) {
-             setState(() {
-               _previewBillId = result; 
-             });
-          } else {
-             setState(() { _currentIndex = 0; }); 
-          }
-        },
-        backgroundColor: Colors.indigo,
-        child: const Icon(Icons.shopping_cart, color: Colors.white),
-      ),
-      
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
