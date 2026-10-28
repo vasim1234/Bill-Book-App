@@ -169,19 +169,33 @@ class DatabaseHelper {
     return 0.0;
   }
 
-  Future<Map<String, dynamic>?> getSettings() async { Database db = await database; List<Map<String, dynamic>> result = await db.query('settings', where: 'id = ?', whereArgs: [1]); if (result.isNotEmpty) return result.first; return null; }
+  Future<Map<String, dynamic>?> getSettings() async { 
+    Database db = await database; 
+    List<Map<String, dynamic>> result = await db.query('settings', where: 'id = ?', whereArgs: [1]); 
+    if (result.isNotEmpty) return result.first; 
+    return null; 
+  }
   
-  Future<int> saveSettings(Map<String, dynamic> row) async { Database db = await database; row['id'] = 1; return await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace); }
+  Future<int> saveSettings(Map<String, dynamic> row) async { 
+    Database db = await database; 
+    row['id'] = 1; 
+    return await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace); 
+  }
   
-  // NAYA: Sirf theme update karne ke liye
+  // Theme update function (Fixed to handle missing settings row)
   Future<int> updateTheme(String newTheme) async {
     Database db = await database;
-    return await db.update(
-      'settings', 
-      {'theme': newTheme}, 
-      where: 'id = ?', 
-      whereArgs: [1]
-    );
+    List<Map<String, dynamic>> existing = await db.query('settings', where: 'id = ?', whereArgs: [1]);
+    if (existing.isEmpty) {
+      return await db.insert('settings', {'id': 1, 'theme': newTheme});
+    } else {
+      return await db.update(
+        'settings', 
+        {'theme': newTheme}, 
+        where: 'id = ?', 
+        whereArgs: [1]
+      );
+    }
   }
 
   Future<int> saveFullBill(Map<String, dynamic> billData, List<Map<String, dynamic>> billItems) async {
