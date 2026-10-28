@@ -430,7 +430,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.grey[150],
+              color: Colors.grey[100],
               borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(12), bottomRight: Radius.circular(12)),
             ),
             child: Column(
@@ -651,7 +651,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
           Container(
             padding: const EdgeInsets.all(16.0),
             decoration: const BoxDecoration(
-              color: Color(0xFF0F172A), // Dark Slate
+              color: Color(0xFF0F172A),
               borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
             ),
             child: Row(
@@ -695,7 +695,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  color: Colors.slate50,
+                  color: Colors.grey[100],
                   padding: const EdgeInsets.all(8),
                   child: const Row(
                     children: [
