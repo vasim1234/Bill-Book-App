@@ -42,7 +42,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     });
   }
 
-  // Name/Number Edit karne ka popup
+  // Customer Name/Number Edit karne ka popup
   void _editCustomer() {
     final nameController = TextEditingController(text: _currentName);
     final mobileController = TextEditingController(text: _currentMobile);
@@ -92,7 +92,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           children: [
             TextField(controller: amountController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Amount (₹)", border: OutlineInputBorder())),
             const SizedBox(height: 10),
-            TextField(controller: noteController, decoration: const InputDecoration(labelText: "Note (Optional)", border: OutlineInputBorder())),
+            TextField(controller: noteController, decoration: const InputDecoration(labelText: "Note / Wajah", border: OutlineInputBorder())),
           ],
         ),
         actions: [
@@ -119,6 +119,78 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     );
   }
 
+  // Transaction Edit ya Delete karne ka popup (Jab entry par click ho)
+  void _editOrDeleteTransaction(Map<String, dynamic> transaction) {
+    final amountController = TextEditingController(text: transaction['amount'].toString());
+    final noteController = TextEditingController(text: transaction['note'] ?? '');
+    String selectedType = transaction['type'];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Edit Transaction"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text("Diya", style: TextStyle(color: Colors.red, fontSize: 13)),
+                      value: "DIYA",
+                      groupValue: selectedType,
+                      onChanged: (val) => setDialogState(() => selectedType = val!),
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text("Liye", style: TextStyle(color: Colors.green, fontSize: 13)),
+                      value: "LIYA",
+                      groupValue: selectedType,
+                      onChanged: (val) => setDialogState(() => selectedType = val!),
+                    ),
+                  ),
+                ],
+              ),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Amount (₹)", border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: noteController,
+                decoration: const InputDecoration(labelText: "Note / Wajah", border: OutlineInputBorder()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                // Delete transaction logic agar database helper me ho ya seedha pop
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Delete feature coming soon!')));
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () async {
+                if (amountController.text.isNotEmpty) {
+                  // Database update logic yahan aayega
+                  Navigator.pop(context);
+                  _loadTransactions();
+                }
+              },
+              child: const Text("Update"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // WhatsApp Reminder bhejna
   void _sendReminder() {
     if (_currentMobile.isEmpty) {
@@ -130,7 +202,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
-  // Bank Statement Report Screen kholne ke liye
   void _openStatementReport() {
     Navigator.push(
       context,
@@ -248,7 +319,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
           const SizedBox(height: 10),
           const Divider(height: 1),
 
-          // --- TRANSACTIONS LIST (Table format) ---
+          // --- TRANSACTIONS LIST ---
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             color: Colors.grey[200],
@@ -270,45 +341,48 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       final t = _transactions[index];
                       bool isDiya = t['type'] == 'DIYA'; 
                       
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(t['date'].toString().substring(0, 16), style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                                      const SizedBox(height: 4),
-                                      Text(t['note'] ?? "Cash", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                    ],
+                      return InkWell(
+                        onTap: () => _editOrDeleteTransaction(t), // Yahan click karne par edit popup khulega
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(t['date'].toString().substring(0, 16), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                        const SizedBox(height: 4),
+                                        Text(t['note'] ?? "Cash", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    isDiya ? "₹ ${t['amount']}" : "",
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      isDiya ? "₹ ${t['amount']}" : "",
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15),
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    !isDiya ? "₹ ${t['amount']}" : "",
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 15),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      !isDiya ? "₹ ${t['amount']}" : "",
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 15),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          const Divider(height: 1),
-                        ],
+                            const Divider(height: 1),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -343,7 +417,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 }
 
 // ========================================================
-// BANK STATEMENT STYLE REPORT SCREEN
+// BANK STATEMENT REPORT SCREEN
 // ========================================================
 class CustomerStatementScreen extends StatelessWidget {
   final String customerName;
@@ -398,7 +472,6 @@ class CustomerStatementScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Details
                 Center(
                   child: Column(
                     children: [
@@ -432,7 +505,6 @@ class CustomerStatementScreen extends StatelessWidget {
                 ),
                 const Divider(height: 24),
                 
-                // Transaction Table Header
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                   color: Colors.grey[200],
@@ -445,7 +517,6 @@ class CustomerStatementScreen extends StatelessWidget {
                   ),
                 ),
                 
-                // Transactions List
                 ...transactions.map((t) {
                   bool isDiya = t['type'] == 'DIYA';
                   return Container(
