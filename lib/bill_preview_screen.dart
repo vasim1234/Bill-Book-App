@@ -52,48 +52,51 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
-  // Theme Change karne ka Dialog (Naya)
-  void _showThemePickerDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Bill Theme Change Karein"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              "Mobile (Thermal)",
-              "Modern Boxed",
-              "Classic Minimal",
-              "Dark Header"
-            ].map((themeName) {
-              return ListTile(
-                title: Text(themeName),
-                leading: Radio<String>(
-                  value: themeName,
-                  groupValue: _settings?['theme'] ?? "Modern Boxed",
-                  onChanged: (value) async {
-                    await DatabaseHelper().updateTheme(value!);
-                    setState(() {
-                      _settings?['theme'] = value;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-                onTap: () async {
-                  await DatabaseHelper().updateTheme(themeName);
+  // Theme Change karne ka Dialog (Fixed Click)
+void _showThemePickerDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text("Bill Theme Change Karein"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            "Mobile (Thermal)",
+            "Modern Boxed",
+            "Classic Minimal",
+            "Dark Header"
+          ].map((themeName) {
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(themeName, style: const TextStyle(fontWeight: FontWeight.w500)),
+              leading: Radio<String>(
+                value: themeName,
+                groupValue: _settings?['theme'] ?? "Modern Boxed",
+                // Radio ko clickable banane ke liye onChanged zaroori hai
+                onChanged: (value) async {
+                  await DatabaseHelper().updateTheme(value!);
                   setState(() {
-                    _settings?['theme'] = themeName;
+                    _settings?['theme'] = value;
                   });
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext); // Dialog band karo
                 },
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
+              ),
+              // ListTile par click karne se bhi theme change ho
+              onTap: () async {
+                await DatabaseHelper().updateTheme(themeName);
+                setState(() {
+                  _settings?['theme'] = themeName;
+                });
+                Navigator.pop(dialogContext); // Dialog band karo
+              },
+            );
+          }).toList(),
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
