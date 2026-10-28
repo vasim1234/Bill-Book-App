@@ -11,7 +11,8 @@ class EditItemScreen extends StatefulWidget {
 
 class _EditItemScreenState extends State<EditItemScreen> {
   final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
+  final _purchasePriceController = TextEditingController();
+  final _salePriceController = TextEditingController();
   final _stockController = TextEditingController();
 
   @override
@@ -19,18 +20,27 @@ class _EditItemScreenState extends State<EditItemScreen> {
     super.initState();
     // Purani values fields mein daal do
     _nameController.text = widget.item['itemName'];
-    _priceController.text = widget.item['price'].toString();
+    _purchasePriceController.text = (widget.item['purchasePrice'] ?? 0.0).toString();
+    _salePriceController.text = widget.item['price'].toString();
     _stockController.text = widget.item['stock'].toString();
   }
 
   void _updateItem() async {
     String name = _nameController.text;
-    double price = double.tryParse(_priceController.text) ?? 0.0;
+    double purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0.0;
+    double salePrice = double.tryParse(_salePriceController.text) ?? 0.0;
     int stock = int.tryParse(_stockController.text) ?? 0;
 
     if (name.isNotEmpty) {
-      await DatabaseHelper().updateItem(widget.item['id'], name, price, stock);
-      Navigator.pop(context, true); // Wapas jao aur batao ki save ho gaya
+      // Yahan 5 arguments pass kiye hain
+      await DatabaseHelper().updateItem(
+        widget.item['id'], 
+        name, 
+        salePrice, 
+        purchasePrice, 
+        stock
+      );
+      if (mounted) Navigator.pop(context, true); 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Naam likhna zaroori hai!')));
     }
@@ -39,27 +49,107 @@ class _EditItemScreenState extends State<EditItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Item"), backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-      body: Padding(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text("Edit Item"), 
+        backgroundColor: Colors.indigo[900], 
+        foregroundColor: Colors.white
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(controller: _nameController, decoration: const InputDecoration(labelText: "Item Name", border: OutlineInputBorder())),
-            const SizedBox(height: 10),
-            TextField(controller: _priceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Price (₹)", border: OutlineInputBorder())),
-            const SizedBox(height: 10),
-            TextField(controller: _stockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Stock (Pcs)", border: OutlineInputBorder())),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _updateItem,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-                child: const Text("Update Item", style: TextStyle(fontSize: 18)),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("ITEM NAME", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+              const SizedBox(height: 5),
+              TextField(
+                controller: _nameController, 
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                )
               ),
-            )
-          ],
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("PURCHASE (₹)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+                        const SizedBox(height: 5),
+                        TextField(
+                          controller: _purchasePriceController, 
+                          keyboardType: TextInputType.number, 
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          )
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("SALE (₹)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+                        const SizedBox(height: 5),
+                        TextField(
+                          controller: _salePriceController, 
+                          keyboardType: TextInputType.number, 
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          )
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              const Text("TOTAL PCS", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+              const SizedBox(height: 5),
+              TextField(
+                controller: _stockController, 
+                keyboardType: TextInputType.number, 
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                )
+              ),
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: _updateItem,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo[900],
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text("Update Item", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
