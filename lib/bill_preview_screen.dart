@@ -52,6 +52,49 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
+  // Theme Change karne ka Dialog (Naya)
+  void _showThemePickerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Bill Theme Change Karein"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              "Mobile (Thermal)",
+              "Modern Boxed",
+              "Classic Minimal",
+              "Dark Header"
+            ].map((themeName) {
+              return ListTile(
+                title: Text(themeName),
+                leading: Radio<String>(
+                  value: themeName,
+                  groupValue: _settings?['theme'] ?? "Modern Boxed",
+                  onChanged: (value) async {
+                    await DatabaseHelper().updateTheme(value!);
+                    setState(() {
+                      _settings?['theme'] = value;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                onTap: () async {
+                  await DatabaseHelper().updateTheme(themeName);
+                  setState(() {
+                    _settings?['theme'] = themeName;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_billData == null) {
@@ -66,6 +109,21 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
+            // Change Theme Button (Top par)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    _showThemePickerDialog(context);
+                  },
+                  icon: const Icon(Icons.palette, color: Colors.indigo),
+                  label: const Text("Change Theme", style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
             // Theme ke hisaab se bill design render karo
             if (theme == "Mobile (Thermal)") _buildThermalReceipt(),
             if (theme == "Modern Boxed") _buildModernBoxed(),
@@ -127,7 +185,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // ==========================================
-  // 1. MOBILE (THERMAL) RECEIPT THEME (Naya)
+  // 1. MOBILE (THERMAL) RECEIPT THEME
   // ==========================================
   Widget _buildThermalReceipt() {
     String businessName = _settings?['businessName'] ?? "MY BUSINESS";
@@ -146,7 +204,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
         color: Colors.white,
         child: Column(
           children: [
-            // 1. Header (Business Details)
             Text(businessName.toUpperCase(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)),
             const SizedBox(height: 4),
             Text(businessType.toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.grey, letterSpacing: 1)),
@@ -155,18 +212,13 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
             Text("Mob: $mobile", style: const TextStyle(fontSize: 13)),
             const SizedBox(height: 15),
             const Text("------------------------------------------------", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
-
-            // 2. Bill Info
             const SizedBox(height: 10),
             _buildThermalRow("Bill No:", "#INV-${_billData!['id']}"),
             _buildThermalRow("Date:", _billData!['date']),
             _buildThermalRow("Customer:", _billData!['customerName']),
             _buildThermalRow("Phone:", _billData!['customerMobile'] ?? ""),
-            
             const SizedBox(height: 10),
             const Text("------------------------------------------------", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
-            
-            // 3. Table Header
             const SizedBox(height: 10),
             const Row(
               children: [
@@ -176,8 +228,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               ],
             ),
             const Divider(color: Colors.grey),
-
-            // 4. Items
             ..._billItems.map((item) {
               double amount = item['price'] * item['quantity'];
               return Padding(
@@ -200,11 +250,8 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 ),
               );
             }),
-
             const SizedBox(height: 10),
             const Divider(color: Colors.black, thickness: 1.5),
-
-            // 5. Total
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -214,8 +261,6 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
             ),
             const Divider(color: Colors.black, thickness: 1.5),
             const SizedBox(height: 15),
-
-            // 6. Payment Status Badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
@@ -228,30 +273,19 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                 style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, letterSpacing: 2),
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // 7. QR Code
             if (upiId.isNotEmpty) ...[
               const Text("SCAN & PAY VIA UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
               const SizedBox(height: 10),
-              QrImageView(
-                data: upiLink,
-                version: QrVersions.auto,
-                size: 140.0,
-              ),
+              QrImageView(data: upiLink, version: QrVersions.auto, size: 140.0),
               const SizedBox(height: 8),
               Text(upiId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             ],
-
             const SizedBox(height: 15),
             const Text("THANK YOU, VISIT AGAIN!", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
-
             const SizedBox(height: 20),
             const Text("------------------------------------------------", style: TextStyle(color: Colors.grey, fontSize: 10, letterSpacing: 2)),
             const SizedBox(height: 10),
-
-            // 8. Footer
             const Text("BHAI BHAI BILLBOOK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1)),
             const Text("studio-wood-two-88.vercel.app", style: TextStyle(fontSize: 10, color: Colors.grey)),
             const SizedBox(height: 10),
