@@ -266,4 +266,14 @@ class DatabaseHelper {
       'totalEarned': totalEarned,
     };
   }
+  // Sirf theme update karne ke liye
+Future<int> updateTheme(String newTheme) async {
+  Database db = await database;
+  return await db.update(
+    'settings', 
+    {'theme': newTheme}, 
+    where: 'id = ?', 
+    whereArgs: [1]
+  );
+}
 }
