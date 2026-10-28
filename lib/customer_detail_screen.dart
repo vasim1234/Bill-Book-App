@@ -417,7 +417,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 }
 
 // ========================================================
-// BANK STATEMENT REPORT SCREEN
+// BANK STATEMENT PDF REPORT SCREEN
 // ========================================================
 class CustomerStatementScreen extends StatelessWidget {
   final String customerName;
@@ -433,12 +433,83 @@ class CustomerStatementScreen extends StatelessWidget {
     required this.transactions,
   });
 
-  void _shareStatementWhatsApp() {
-    if (customerMobile.isEmpty) return;
-    String statusText = balance > 0 ? "Aapko lene hain: ₹${balance.abs()}" : (balance < 0 ? "Aapko dene hain: ₹${balance.abs()}" : "Hisaab Clear");
-    String text = "📄 *ACCOUNT STATEMENT* \nCustomer: $customerName\nMobile: $customerMobile\nStatus: $statusText\nTotal Entries: ${transactions.length}\n\n- Generated via My Dukan";
-    String url = "https://wa.me/$customerMobile?text=${Uri.encodeComponent(text)}";
-    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  // Real PDF Generate karke WhatsApp/Share karne ka function
+  Future<void> _generateAndSharePdf(BuildContext context) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            // Header
+            pw.Center(
+              child: pw.Column(
+                children: [
+                  pw.Text("STATEMENT OF ACCOUNT", style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 4),
+                  pw.Text("My Dukan - Business Khata", style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            
+            // Customer Info Box
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text("Customer Name: $customerName", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+                    pw.SizedBox(height: 4),
+                    pw.Text("Phone: $customerMobile", style: const TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text("Net Balance: ₹${balance.abs().toStringAsFixed(2)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12, color: balance > 0 ? PdfColors.red : PdfColors.green)),
+                    pw.SizedBox(height: 4),
+                    pw.Text(balance > 0 ? "Aapko lene hain" : (balance < 0 ? "Aapko dene hain" : "Clear"), style: const TextStyle(fontSize: 10)),
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 15),
+            pw.Divider(),
+            pw.SizedBox(height: 10),
+
+            // Transactions Table
+            pw.Table.fromTextArray(
+              headers: ['Date & Time', 'Note / Wajah', 'Diye (₹)', 'Liye (₹)'],
+              data: transactions.map((t) {
+                bool isDiya = t['type'] == 'DIYA';
+                return [
+                  t['date'].toString().substring(0, 16),
+                  t['note'] ?? 'Cash',
+                  isDiya ? "₹${t['amount']}" : "-",
+                  !isDiya ? "₹${t['amount']}" : "-",
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10, color: PdfColors.white),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.indigo900),
+              cellStyle: const pw.TextStyle(fontSize: 10),
+              cellAlignment: pw.Alignment.centerLeft,
+            ),
+            
+            pw.SizedBox(height: 30),
+            pw.Center(
+              child: pw.Text("Generated via My Dukan App", style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+            ),
+          ];
+        },
+      ),
+    );
+
+    // Share PDF directly (WhatsApp par file ke roop me jayegi)
+    await Printing.sharePdf(bytes: await pdf.save(), filename: 'statement_$customerName.pdf');
   }
 
   @override
@@ -453,8 +524,8 @@ class CustomerStatementScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            onPressed: _shareStatementWhatsApp,
-            tooltip: "Share Statement",
+            onPressed: () => _generateAndSharePdf(context),
+            tooltip: "Share PDF Statement",
           ),
         ],
       ),
@@ -561,9 +632,9 @@ class CustomerStatementScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 45,
                     child: ElevatedButton.icon(
-                      onPressed: _shareStatementWhatsApp,
-                      icon: const Icon(Icons.share, color: Colors.white),
-                      label: const Text("Share Statement on WhatsApp", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      onPressed: () => _generateAndSharePdf(context),
+                      icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                      label: const Text("Share PDF Statement on WhatsApp", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                     ),
                   ),
