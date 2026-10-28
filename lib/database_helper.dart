@@ -18,12 +18,15 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
     return await openDatabase(
       path,
-      version: 7, // Version 7 (Users/Login ke liye)
+      version: 8, // Version 8 kar diya (Purchase Price ke liye)
       onCreate: (db, version) async {
         // Purane Tables
         await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
         await db.execute('CREATE TABLE bill_items(id INTEGER PRIMARY KEY AUTOINCREMENT, billId INTEGER, itemName TEXT, quantity INTEGER, price REAL)');
-        await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, stock INTEGER)');
+        
+        // Yahan items table mein purchasePrice add kiya
+        await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, purchasePrice REAL, stock INTEGER)');
+        
         await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT, theme TEXT, gst TEXT, businessType TEXT)');
         await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
         await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
@@ -54,6 +57,10 @@ class DatabaseHelper {
         if (oldVersion < 7) {
           await db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)');
         }
+        if (oldVersion < 8) {
+          // Purani items table mein purchase price add kar rahe hain
+          await db.execute('ALTER TABLE items ADD COLUMN purchasePrice REAL DEFAULT 0.0');
+        }
       }
     );
   }
@@ -76,7 +83,7 @@ class DatabaseHelper {
     return null;
   }
 
-  // ================= CASH / KHATA FUNCTIONS (LOGIC FIXED) =================
+  // ================= CASH / KHATA FUNCTIONS =================
 
   Future<int> insertCustomer(Map<String, dynamic> row) async {
     Database db = await database;
@@ -107,12 +114,9 @@ class DatabaseHelper {
 
     for (var t in transactions) {
       double amount = (t['amount'] as num).toDouble();
-      // FIX: Agar humne DIYA hai, toh humein LENA hai
       if (t['type'] == 'DIYA') {
         totalLena += amount; 
-      } 
-      // FIX: Agar humne LIYA hai, toh humein DENA hai
-      else if (t['type'] == 'LIYA') {
+      } else if (t['type'] == 'LIYA') {
         totalDena += amount; 
       }
     }
@@ -126,9 +130,7 @@ class DatabaseHelper {
     double balance = 0.0;
     for (var t in transactions) {
       double amount = (t['amount'] as num).toDouble();
-      // FIX: DIYA (Udhaar diya) = Customer par baaki = Positive Balance
       if (t['type'] == 'DIYA') balance += amount; 
-      // FIX: LIYA (Advance liya) = Customer ko dena = Negative Balance
       if (t['type'] == 'LIYA') balance -= amount; 
     }
     return balance;
@@ -149,11 +151,12 @@ class DatabaseHelper {
   
   Future<int> deleteItem(int id) async { Database db = await database; return await db.delete('items', where: 'id = ?', whereArgs: [id]); }
 
-  Future<int> updateItem(int id, String name, double price, int stock) async {
+  // Update Item (Purchase aur Sale dono prices ke sath)
+  Future<int> updateItem(int id, String name, double price, double purchasePrice, int stock) async {
     Database db = await database;
     return await db.update(
       'items', 
-      {'itemName': name, 'price': price, 'stock': stock}, 
+      {'itemName': name, 'price': price, 'purchasePrice': purchasePrice, 'stock': stock}, 
       where: 'id = ?', 
       whereArgs: [id]
     );
