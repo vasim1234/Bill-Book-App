@@ -18,15 +18,11 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'bill_book_v2.db'); 
     return await openDatabase(
       path,
-      version: 8, // Version 8 kar diya (Purchase Price ke liye)
+      version: 8, // Version 8
       onCreate: (db, version) async {
-        // Purane Tables
         await db.execute('CREATE TABLE bills(id INTEGER PRIMARY KEY AUTOINCREMENT, customerName TEXT, customerMobile TEXT, totalAmount REAL, date TEXT, paymentStatus TEXT)');
         await db.execute('CREATE TABLE bill_items(id INTEGER PRIMARY KEY AUTOINCREMENT, billId INTEGER, itemName TEXT, quantity INTEGER, price REAL)');
-        
-        // Yahan items table mein purchasePrice add kiya
         await db.execute('CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, price REAL, purchasePrice REAL, stock INTEGER)');
-        
         await db.execute('CREATE TABLE settings(id INTEGER PRIMARY KEY, businessName TEXT, ownerName TEXT, mobile TEXT, address TEXT, upiId TEXT, theme TEXT, gst TEXT, businessType TEXT)');
         await db.execute('CREATE TABLE customers(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, mobile TEXT)');
         await db.execute('CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, customerId INTEGER, amount REAL, type TEXT, note TEXT, date TEXT)');
@@ -58,7 +54,6 @@ class DatabaseHelper {
           await db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT)');
         }
         if (oldVersion < 8) {
-          // Purani items table mein purchase price add kar rahe hain
           await db.execute('ALTER TABLE items ADD COLUMN purchasePrice REAL DEFAULT 0.0');
         }
       }
@@ -151,7 +146,6 @@ class DatabaseHelper {
   
   Future<int> deleteItem(int id) async { Database db = await database; return await db.delete('items', where: 'id = ?', whereArgs: [id]); }
 
-  // Update Item (Purchase aur Sale dono prices ke sath)
   Future<int> updateItem(int id, String name, double price, double purchasePrice, int stock) async {
     Database db = await database;
     return await db.update(
@@ -179,6 +173,17 @@ class DatabaseHelper {
   
   Future<int> saveSettings(Map<String, dynamic> row) async { Database db = await database; row['id'] = 1; return await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace); }
   
+  // NAYA: Sirf theme update karne ke liye
+  Future<int> updateTheme(String newTheme) async {
+    Database db = await database;
+    return await db.update(
+      'settings', 
+      {'theme': newTheme}, 
+      where: 'id = ?', 
+      whereArgs: [1]
+    );
+  }
+
   Future<int> saveFullBill(Map<String, dynamic> billData, List<Map<String, dynamic>> billItems) async {
     Database db = await database;
     int billId = await db.insert('bills', billData);
@@ -266,14 +271,4 @@ class DatabaseHelper {
       'totalEarned': totalEarned,
     };
   }
-  // Sirf theme update karne ke liye
-Future<int> updateTheme(String newTheme) async {
-  Database db = await database;
-  return await db.update(
-    'settings', 
-    {'theme': newTheme}, 
-    where: 'id = ?', 
-    whereArgs: [1]
-  );
-}
 }
