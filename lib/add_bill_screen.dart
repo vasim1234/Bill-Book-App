@@ -123,28 +123,35 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.person, color: Colors.blue),
-                          SizedBox(width: 8),
-                          Text("Customer Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                        ],
-                      ),
-                      // Contacts Button (PWA Style)
-                      OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.contact_phone, size: 18, color: Colors.orange),
-                        label: const Text("CONTACTS", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.grey[100],
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                      )
-                    ],
-                  ),
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    const Row(
+      children: [
+        Icon(Icons.person, color: Colors.blue),
+        SizedBox(width: 8),
+        Text("Customer Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+      ],
+    ),
+    // Contacts Button (Chhota kiya gaya)
+    Flexible( // <-- Ye add kiya taaki jagah bache
+      child: OutlinedButton.icon(
+        onPressed: () {},
+        icon: const Icon(Icons.contact_phone, size: 16, color: Colors.orange),
+        label: const Text(
+          "CONTACTS", 
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo, fontSize: 12),
+          overflow: TextOverflow.ellipsis, // <-- Text cut hone par ... dikhega
+        ),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.grey[100],
+          side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 8), // Padding kam ki
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    )
+  ],
+),
                   const SizedBox(height: 20),
 
                   // Name
