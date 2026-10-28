@@ -1,0 +1,61 @@
+
+📁 PROJECT: My Dukan (Flutter Android App)
+
+🎯 App Ka Maqsad
+
+Ek professional dukaan (Kirana/Wholesaler) ke liye billing aur hisaab-kitab wali app. Isme Bill Book, Stock, Khata (Cash), aur Staff management sab kuch hai. Har user apni Email ID se login karega. (PWA se inspired hai, ab Flutter mein convert kar rahe hain).
+
+🛠️ Tech Stack
+
+· Framework: Flutter (Dart)
+· Database: SQLite (sqflite package)
+· Build System: GitHub Actions (Mobile se APK build karne ke liye)
+· GitHub Repo: vasim1234/Bill-Book-App
+· Packages Used: sqflite, path, url_launcher, qr_flutter
+
+🗄️ Database Structure (Version 7)
+
+(File: lib/database_helper.dart)
+
+1. users: id, email, password (Login ke liye)
+2. bills: id, customerName, customerMobile, totalAmount, date, paymentStatus
+3. bill_items: id, billId, itemName, quantity, price
+4. items (Stock): id, itemName, price, stock
+5. customers: id, name, mobile
+6. transactions (Cash): id, customerId, amount, type (LIYA/DIYA), note, date
+7. settings: id, businessName, ownerName, mobile, address, upiId, theme, gst, businessType
+8. staff: id, name, mobile, dailyWage
+9. attendance: id, staffId, date, status (Present/Absent), paymentStatus
+10. staff_payments: id, staffId, amount, note, date
+
+📱 App Ka Structure (Screens & Files)
+
+1. lib/main.dart: App ka main entry point. AuthScreen (Login) se shuru hota hai. Login ke baad MainNavigationScreen khulti hai jisme BottomNavigationBar hai (Cash, Stock, Quick, Staff). Yahan FAB (Cart button) se AddBillScreen khulta hai.
+2. lib/auth_screen.dart: Login aur Signup ka UI. Local database se email/password check karta hai.
+3. lib/cash_screen.dart (Khata): Customers ki list, Total Lena/Dena ka summary. Naya customer aur transaction add karne ka popup. Customer par click karne se CustomerDetailScreen khulti hai.
+4. lib/customer_detail_screen.dart: Ek customer ka pura hisaab. Edit customer, Report, WhatsApp Reminder, aur "Aapne Diye / Aapne Liye" ka button.
+5. lib/stock_screen.dart: Dukaan ke items ki list. Total Stock Value aur This Month Sale ka dashboard. Item Edit aur IN/OUT ka option.
+6. lib/add_item_screen.dart: Naya stock item add karne ka form.
+7. lib/edit_item_screen.dart: Purane item ko edit karne ka form.
+8. lib/staff_screen.dart: Staff ki list, Present/Absent summary, Naya staff add, aur Haazri lagane ka popup.
+9. lib/staff_detail_screen.dart: Staff ki detail, Pagar Bani, Paise Diye, Haazri history, Advance/Pagar dene ka option.
+10. lib/add_bill_screen.dart: Naya bill banane ka screen. Customer details, Multi-item cart (Bill Tally), Payment status (UNPAID/CASH/UPI). Save karne par BillPreviewScreen par bhejta hai.
+11. lib/bill_preview_screen.dart: Bill ka professional print preview. 3 themes hain (Modern Boxed, Classic Minimal, Dark Header). QR Code generate karta hai aur WhatsApp par bill bhejta hai.
+12. lib/settings_screen.dart: Sidebar (Drawer). Business Name, GST, UPI ID, Bill Theme, Business Type set karne ke liye.
+
+✅ Kya-Kya Ho Chuka Hai (Completed)
+
+· Login/Signup system (Local Database).
+· Multi-item Billing system (Stock minus hota hai).
+· Cash/Khata system (Lena/Dena ka calculation aur history sahi hai).
+· Staff Haazri aur Pagar system (Advance payment ke sath).
+· Settings page with GST aur Invoice Themes.
+· Professional Bill Preview with 3 themes, QR Code, aur WhatsApp share.
+· GitHub Actions se APK build hona.
+
+⏳ Ab Kya Baaki Hai (Pending Tasks)
+
+1. PDF / Print: Bill aur Report ko asli PDF mein save karna aur Bluetooth Thermal Printer se print karna.
+2. Photo Upload: Stock items ke sath photo lagana (Gallery/Camera se).
+3. Quick Add / Dashboard: "Quick" tab ko kaam ka banana. Home screen par ek proper Dashboard (Total Sale, Stock Value, etc.) banana.
+4. Cloud Sync (Optional): Aage jaakar Firebase lagana taaki data phone kharab hone par bhi bacha rahe.
