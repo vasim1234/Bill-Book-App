@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'database_helper.dart';
 
 class BillPreviewScreen extends StatefulWidget {
@@ -40,21 +43,112 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
     });
   }
 
-  void _sendWhatsAppBill() async {
+  // 1. PDF Document Generate karne ka common function
+  Future<pw.Document> _generatePdfDocument() async {
+    final pdf = pw.Document();
+    String businessName = _settings?['businessName'] ?? "HUR GARMENTS";
+    String address = _settings?['address'] ?? "Bodeli";
+    String mobile = _settings?['mobile'] ?? "9904178658";
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            pw.Center(
+              child: pw.Column(
+                children: [
+                  pw.Text(businessName.toUpperCase(), style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 4),
+                  pw.Text("Address: $address | Ph: $mobile", style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text("Bill To:", style: pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
+                    pw.Text(_billData!['customerName'], style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                    pw.Text("Phone: ${_billData!['customerMobile'] ?? 'N/A'}", style: const pw.TextStyle(fontSize: 10)),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text("Invoice: #HUR-${_billData!['id']}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+                    pw.Text("Date: ${_billData!['date']}", style: const pw.TextStyle(fontSize: 10)),
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 15),
+            pw.Divider(),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['Item Description', 'Qty', 'Unit Price', 'Amount'],
+              data: _billItems.map((item) {
+                double amount = item['price'] * item['quantity'];
+                return [
+                  item['itemName'],
+                  item['quantity'].toString(),
+                  "₹${item['price']}",
+                  "₹${amount.toStringAsFixed(2)}",
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10, color: PdfColors.white),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.indigo900),
+              cellStyle: const pw.TextStyle(fontSize: 10),
+              cellAlignment: pw.Alignment.centerLeft,
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.end,
+              children: [
+                pw.Text("Total Amount: ₹${_billData!['totalAmount']}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+            pw.SizedBox(height: 40),
+            pw.Center(
+              child: pw.Text("Thank you for shopping with $businessName!", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+            ),
+          ];
+        },
+      ),
+    );
+    return pdf;
+  }
+
+  // 2. Thermal Printer / Bluetooth Print Function
+  void _printInvoice() async {
+    final pdf = await _generatePdfDocument();
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
+  // 3. Save PDF Function
+  void _savePdf() async {
+    final pdf = await _generatePdfDocument();
+    await Printing.sharePdf(bytes: await pdf.save(), filename: 'invoice_${_billData!['id']}.pdf');
+  }
+
+  // 4. WhatsApp Bill PDF Send Function
+  void _sendWhatsAppBillPdf() async {
     String mobile = _billData!['customerMobile'] ?? "";
     if (mobile.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer ka mobile number nahi hai!')));
       return;
     }
     if (!mobile.startsWith('91')) mobile = '91$mobile';
-    
-    String businessName = _settings?['businessName'] ?? "HUR GARMENTS";
-    String total = _billData!['totalAmount'].toString();
-    
-    String text = "Namaste ${_billData!['customerName']},\n\nAapka bill details:\nBusiness: $businessName\nTotal Amount: ₹$total\n\nThank you!";
-    String url = "https://wa.me/$mobile?text=${Uri.encodeComponent(text)}";
-    
-    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+
+    final pdf = await _generatePdfDocument();
+    // Share PDF directly to WhatsApp / other apps
+    await Printing.sharePdf(bytes: await pdf.save(), filename: 'invoice_${_billData!['id']}.pdf');
   }
 
   void _showThemePickerDialog(BuildContext context) {
@@ -138,12 +232,12 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
 
               const SizedBox(height: 20),
 
-              // Action Buttons
+              // --- 1. THERMAL PRINTER / BLUETOOTH PRINT BUTTON ---
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thermal Printer feature coming next!'))); },
+                  onPressed: _printInvoice,
                   icon: const Icon(Icons.print),
                   label: const Text("Thermal Printer / Bluetooth Print", style: TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo[900], foregroundColor: Colors.white),
@@ -153,18 +247,20 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
               
               Row(
                 children: [
+                  // --- 2. SAVE PDF BUTTON ---
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF feature coming next!'))); },
+                      onPressed: _savePdf,
                       icon: const Icon(Icons.picture_as_pdf),
                       label: const Text("Save PDF"),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400], foregroundColor: Colors.black),
                     ),
                   ),
                   const SizedBox(width: 10),
+                  // --- 3. WHATSAPP BILL (PDF SHARE) BUTTON ---
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _sendWhatsAppBill,
+                      onPressed: _sendWhatsAppBillPdf,
                       icon: const Icon(Icons.message),
                       label: const Text("WhatsApp Bill"),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
