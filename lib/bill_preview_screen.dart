@@ -44,7 +44,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
   }
 
   // --- VIP PDF Document Generator (Jo Screen jaisa hi bill print/share karega) ---
-  Future<pw.Document> _generatePdfDocument() async {
+   Future<pw.Document> _generatePdfDocument() async {
     final pdf = pw.Document();
     String businessName = _settings?['businessName'] ?? "HUR GARMENTS";
     String ownerName = _settings?['ownerName'] ?? "Mansuri Vasimraj";
@@ -78,14 +78,14 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           pw.Text(businessName.toUpperCase(), style: pw.TextStyle(color: PdfColors.white, fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                          pw.Text(businessType.toUpperCase(), style: const pw.TextStyle(color: PdfColors.white70, fontSize: 9)),
+                          pw.Text(businessType.toUpperCase(), style: const pw.TextStyle(color: PdfColors.grey200, fontSize: 9)),
                         ],
                       ),
                       pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.end,
                         children: [
                           pw.Text("INVOICE", style: pw.TextStyle(color: PdfColors.white, fontSize: 14, fontWeight: pw.FontWeight.bold)),
-                          pw.Text("#HUR-${_billData!['id']}", style: const pw.TextStyle(color: PdfColors.white70, fontSize: 10)),
+                          pw.Text("#HUR-${_billData!['id']}", style: const pw.TextStyle(color: PdfColors.grey200, fontSize: 10)),
                         ],
                       ),
                     ],
@@ -202,7 +202,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
                     ),
                   ],
                 ),
-                const pw.Spacer(),
+                pw.Spacer(), // const hata diya gaya hai
                 pw.Center(
                   child: pw.Column(
                     children: [
@@ -219,7 +219,7 @@ class _BillPreviewScreenState extends State<BillPreviewScreen> {
       ),
     );
     return pdf;
-  }
+   }
 
   // 1. Thermal Printer / Bluetooth Print Button
   void _printInvoice() async {
